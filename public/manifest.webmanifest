@@ -1,0 +1,14 @@
+{
+  "name": "Nam English Online",
+  "short_name": "Nam English",
+  "description": "Học lý thuyết và luyện ngữ pháp tiếng Anh trực tuyến.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#1d4ed8",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
