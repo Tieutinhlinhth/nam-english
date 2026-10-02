@@ -97,7 +97,9 @@ jobs:
       - name: Commit updated snapshot
         shell: bash
         run: |
-          if git diff --quiet public/source-snapshot.txt; then
+          git add -f public/source-snapshot.txt
+
+          if git diff --cached --quiet; then
             echo "Snapshot has not changed."
             exit 0
           fi
@@ -105,6 +107,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          git add public/source-snapshot.txt
           git commit -m "chore: update source snapshot [skip ci]"
           git push
