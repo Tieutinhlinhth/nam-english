@@ -1,6 +1,6 @@
 NAM ENGLISH SOURCE SNAPSHOT
-Generated: 2026-10-03 01:01:21 UTC
-Commit: 0fa3c90b0ebedc5cd04b19218d6317562e19b8d3
+Generated: 2026-10-03 01:47:55 UTC
+Commit: a32a20eb8276445f06a737fecb5cc9904ae968a4
 
 ========================================
 PROJECT FILE TREE
@@ -79,10 +79,10 @@ import {
   ArrowLeft, ArrowRight, BarChart3, BookOpen, CheckCircle2,
   GraduationCap, History, Home, ListChecks, LogIn, Menu, RotateCcw,
   Target, Trophy, UserPlus, X, XCircle, User, Eye, EyeOff, KeyRound,
-  Cloud, CloudOff, RefreshCw, Save, ShieldCheck, Headphones, Sparkles
+  Cloud, CloudOff, RefreshCw, Save, ShieldCheck,
+  Headphones, Mic, BookOpenCheck, PenLine, Sparkles, ChevronRight
 } from 'lucide-react'
 import { LESSONS, QUESTIONS } from './questions'
-import SkillsSection from './skills/SkillsHub'
 import Listening from './skills/Listening'
 import Speaking from './skills/Speaking'
 import Reading from './skills/Reading'
@@ -101,14 +101,13 @@ const lessonName = id =>
 // UI primitives
 // ============================================================
 const BTN_VARIANTS = {
-  primary:      'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
-  danger:       'bg-red-600 text-white hover:bg-red-700 shadow-sm',
-  ghost:        'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
-  outline:      'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50',
-  white:        'bg-white text-blue-700 hover:bg-blue-50 shadow-sm',
-  accent:       'bg-rose-500 text-white hover:bg-rose-600 shadow-sm',
-  glass:        'border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur',
-  'glass-solid':'bg-white/95 text-blue-700 hover:bg-white shadow-sm'
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
+  danger:  'bg-red-600 text-white hover:bg-red-700 shadow-sm',
+  ghost:   'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+  outline: 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50',
+  white:   'bg-white text-blue-700 hover:bg-blue-50 shadow-sm',
+  accent:  'bg-rose-500 text-white hover:bg-rose-600 shadow-sm',
+  glass:   'border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur',
 }
 
 const Btn = ({ children, className = '', variant = 'primary', ...p }) => (
@@ -117,9 +116,7 @@ const Btn = ({ children, className = '', variant = 'primary', ...p }) => (
       BTN_VARIANTS[variant] || BTN_VARIANTS.primary
     } ${className}`}
     {...p}
-  >
-    {children}
-  </button>
+  >{children}</button>
 )
 
 const Card = ({ children, className = '' }) => (
@@ -144,6 +141,37 @@ const Stat = ({ icon, title, value, note }) => (
     </div>
   </Card>
 )
+
+// ============================================================
+// 5 lối vào chính trên Home
+// ============================================================
+const MAIN_ENTRIES = [
+  {
+    id: 'grammar', title: 'Ngữ pháp', vi: '13 bài lý thuyết • 300 câu hỏi',
+    icon: <BookOpen />, gradient: 'from-blue-600 to-indigo-700',
+    tags: ['Cấu trúc câu', 'Thì', 'Câu điều kiện', 'Bị động']
+  },
+  {
+    id: 'listening', title: 'Listening', vi: 'Nghe – trả lời & chép chính tả',
+    icon: <Headphones />, gradient: 'from-sky-500 to-blue-700',
+    tags: ['5 bài', 'Phát audio', 'Dictation']
+  },
+  {
+    id: 'speaking', title: 'Speaking', vi: 'Đọc theo mẫu, chấm phát âm',
+    icon: <Mic />, gradient: 'from-rose-500 to-pink-700',
+    tags: ['6 bài', 'Nhận diện giọng nói']
+  },
+  {
+    id: 'reading', title: 'Reading', vi: 'Đọc hiểu – trắc nghiệm theo cấp độ',
+    icon: <BookOpenCheck />, gradient: 'from-emerald-500 to-teal-700',
+    tags: ['4 bài', 'Cơ bản → Nâng cao']
+  },
+  {
+    id: 'writing', title: 'Writing', vi: 'Viết luận, chấm sơ bộ + bài mẫu',
+    icon: <PenLine />, gradient: 'from-amber-500 to-orange-700',
+    tags: ['6 đề', 'Chấm tức thì']
+  },
+]
 
 // ============================================================
 // App
@@ -336,28 +364,43 @@ export default function App() {
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         {view === 'home' && (
-          <HomePage done={done} correct={correct} session={session} continueQuiz={continueQuiz}
-            startQuiz={startQuiz} openLesson={id => { setLessonId(id); go('lesson') }} go={go} history={history} />
+          <HomePage
+            done={done} correct={correct} session={session}
+            continueQuiz={continueQuiz} startQuiz={startQuiz}
+            go={go} history={history} skillProgress={skillProgress}
+            answers={answers}
+          />
         )}
-        {view === 'lessons' && (
-          <LessonsHub answers={answers} history={history} skillProgress={skillProgress}
+
+        {view === 'grammar' && (
+          <GrammarPage
+            answers={answers} history={history}
             openLesson={id => { setLessonId(id); go('lesson') }}
             practice={id => startQuiz(id, 'practice')}
             exam={id => startQuiz(id, 'exam')}
-            go={go} />
+            go={go}
+          />
         )}
+
         {view === 'lesson' && lesson && (
-          <LessonPage lesson={lesson} go={go} practice={() => startQuiz(lesson.id, 'practice')} exam={() => startQuiz(lesson.id, 'exam')} />
+          <LessonPage lesson={lesson} go={go}
+            practice={() => startQuiz(lesson.id, 'practice')}
+            exam={() => startQuiz(lesson.id, 'exam')} />
         )}
+
         {view === 'quiz' && session && current && (
           <QuizPage session={session} questions={sessionQuestions} current={current} choice={currentChoice}
             selectChoice={selectChoice} checkCurrent={checkCurrent} move={move} jump={jump}
             finish={finishQuiz} quit={quitQuiz} />
         )}
+
         {view === 'result' && session?.result && (
-          <ResultPage attempt={session.result} questions={sessionQuestions} startQuiz={startQuiz} clear={clearSession} go={go} />
+          <ResultPage attempt={session.result} questions={sessionQuestions}
+            startQuiz={startQuiz} clear={clearSession} go={go} />
         )}
+
         {view === 'progress' && <ProgressPage answers={answers} history={history} startQuiz={startQuiz} go={go} />}
+
         {view === 'auth' && (
           <AuthPage authMode={authMode} setAuthMode={setAuthMode} email={email} setEmail={setEmail}
             password={password} setPassword={setPassword}
@@ -368,16 +411,17 @@ export default function App() {
             recovery={recovery} newPassword={newPassword} setNewPassword={setNewPassword}
             updatePassword={updatePassword} />
         )}
+
         {view === 'profile' && user && (
           <ProfilePage user={user} displayName={displayName} setDisplayName={setDisplayName}
             notice={notice} saveProfile={saveProfile} syncStatus={syncStatus}
             online={online} syncNow={syncNow} logout={logout} />
         )}
 
-        {view === 'listening' && <Listening onBack={() => go('lessons')} onComplete={(id, s) => markSkill('listening', id, s)} />}
-        {view === 'speaking'  && <Speaking  onBack={() => go('lessons')} onComplete={(id, s) => markSkill('speaking',  id, s)} />}
-        {view === 'reading'   && <Reading   onBack={() => go('lessons')} onComplete={(id, s) => markSkill('reading',   id, s)} />}
-        {view === 'writing'   && <Writing   onBack={() => go('lessons')} onComplete={(id, s) => markSkill('writing',   id, s)} />}
+        {view === 'listening' && <Listening onBack={() => go('home')} onComplete={(id, s) => markSkill('listening', id, s)} />}
+        {view === 'speaking'  && <Speaking  onBack={() => go('home')} onComplete={(id, s) => markSkill('speaking',  id, s)} />}
+        {view === 'reading'   && <Reading   onBack={() => go('home')} onComplete={(id, s) => markSkill('reading',   id, s)} />}
+        {view === 'writing'   && <Writing   onBack={() => go('home')} onComplete={(id, s) => markSkill('writing',   id, s)} />}
       </main>
 
       <MobileNav go={go} />
@@ -386,7 +430,7 @@ export default function App() {
 }
 
 // ============================================================
-// Header / Nav
+// Header
 // ============================================================
 function Header({ user, displayName, syncing, syncStatus, online, logout, go, menu, setMenu }) {
   const syncLabel = !online ? 'Ngoại tuyến'
@@ -403,34 +447,42 @@ function Header({ user, displayName, syncing, syncStatus, online, logout, go, me
           <span className="text-lg">Nam English</span>
         </button>
 
-        <nav className="hidden gap-1 md:flex">
+        <nav className="hidden gap-0.5 lg:flex">
           <NavButton onClick={() => go('home')} icon={<Home />}>Trang chủ</NavButton>
-          <NavButton onClick={() => go('lessons')} icon={<BookOpen />}>Bài học</NavButton>
+          <NavButton onClick={() => go('grammar')} icon={<BookOpen />}>Ngữ pháp</NavButton>
+          <NavButton onClick={() => go('listening')} icon={<Headphones />}>Listening</NavButton>
+          <NavButton onClick={() => go('speaking')} icon={<Mic />}>Speaking</NavButton>
+          <NavButton onClick={() => go('reading')} icon={<BookOpenCheck />}>Reading</NavButton>
+          <NavButton onClick={() => go('writing')} icon={<PenLine />}>Writing</NavButton>
           <NavButton onClick={() => go('progress')} icon={<BarChart3 />}>Kết quả</NavButton>
-          {user && <NavButton onClick={() => go('profile')} icon={<User />}>Tài khoản</NavButton>}
         </nav>
 
         <div className="flex items-center gap-2">
-          <span className={`hidden items-center gap-1 text-xs sm:flex ${syncStatus === 'error' ? 'text-red-600' : 'text-slate-400'}`}>
+          <span className={`hidden items-center gap-1 text-xs xl:flex ${syncStatus === 'error' ? 'text-red-600' : 'text-slate-400'}`}>
             {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}{syncLabel}
           </span>
           {user
-            ? <button className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium transition hover:bg-slate-200 md:block" onClick={() => go('profile')}>
+            ? <button className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium transition hover:bg-slate-200 md:block"
+                onClick={() => go('profile')}>
                 {displayName || user.email}
               </button>
             : <Btn onClick={() => go('auth')}><LogIn className="mr-2 inline h-4 w-4" />Đăng nhập</Btn>}
-          <button className="rounded-lg p-2 md:hidden" onClick={() => setMenu(!menu)} aria-label="Mở menu"><Menu /></button>
+          <button className="rounded-lg p-2 lg:hidden" onClick={() => setMenu(!menu)} aria-label="Mở menu"><Menu /></button>
         </div>
       </div>
 
       {menu && (
-        <div className="grid border-t border-slate-200 p-3 md:hidden">
-          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('home')}>Trang chủ</button>
-          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('lessons')}>Bài học</button>
-          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('progress')}>Kết quả</button>
+        <div className="grid border-t border-slate-200 p-3 lg:hidden">
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('home')}>🏠 Trang chủ</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('grammar')}>📘 Ngữ pháp</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('listening')}>🎧 Listening</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('speaking')}>🎤 Speaking</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('reading')}>📖 Reading</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('writing')}>✍️ Writing</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('progress')}>📊 Kết quả</button>
           {user
             ? <>
-                <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('profile')}>Tài khoản</button>
+                <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('profile')}>👤 Tài khoản</button>
                 <button className="rounded-lg p-3 text-left text-red-600 hover:bg-red-50" onClick={() => logout('local')}>Đăng xuất</button>
               </>
             : <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('auth')}>Đăng nhập</button>}
@@ -442,39 +494,36 @@ function Header({ user, displayName, syncing, syncStatus, online, logout, go, me
 
 function NavButton({ icon, children, ...p }) {
   return (
-    <button className="flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900" {...p}>
+    <button className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900" {...p}>
       <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>{children}
     </button>
   )
 }
 
 // ============================================================
-// Home
+// Home — 5 card lớn ngay dưới hero
 // ============================================================
-function HomePage({ done, correct, session, continueQuiz, startQuiz, openLesson, go, history }) {
+function HomePage({ done, correct, session, continueQuiz, startQuiz, go, history, skillProgress, answers }) {
   const last = history[0]
   return (
     <div className="space-y-8">
-      {/* HERO — button đã fix, không còn bị che trắng */}
+      {/* HERO */}
       <section className="grid gap-8 rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl md:grid-cols-2 md:p-12">
         <div>
-          <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">13 bài • 300 câu • 4 kỹ năng</span>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
+            13 bài ngữ pháp • 300 câu • 4 kỹ năng
+          </span>
           <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">
             Học rõ.<br />Luyện thật.<br />Nhớ lâu.
           </h1>
           <p className="mt-4 text-lg text-blue-100">
-            Lý thuyết đầy đủ, bài tập theo mức độ, và phòng luyện 4 kỹ năng Nghe – Nói – Đọc – Viết.
+            Chọn một trong năm lối vào bên dưới để bắt đầu.
           </p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Btn variant="white" onClick={() => go('lessons')}>
-              <BookOpen className="mr-2 inline h-4 w-4" />Chọn bài học
+            <Btn variant="white" onClick={() => startQuiz(14, 'exam')}>
+              <Sparkles className="mr-2 inline h-4 w-4" />Kiểm tra tổng hợp
             </Btn>
-            <Btn variant="accent" onClick={() => go('lessons')}>
-              <Sparkles className="mr-2 inline h-4 w-4" />4 kỹ năng
-            </Btn>
-            <Btn variant="glass" onClick={() => startQuiz(14, 'exam')}>
-              Kiểm tra tổng hợp
-            </Btn>
+            <Btn variant="glass" onClick={() => go('progress')}>Xem tiến độ</Btn>
           </div>
         </div>
 
@@ -501,6 +550,64 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, openLesson,
         </Card>
       </section>
 
+      {/* 5 LỐI VÀO – ĐẶT NGAY DƯỚI HERO */}
+      <section>
+        <div className="mb-6">
+          <h2 className="text-2xl font-black md:text-3xl">Chọn bài để bắt đầu</h2>
+          <p className="mt-1 text-slate-500">Ngữ pháp hoặc một trong bốn kỹ năng — vào thẳng, không qua trung gian.</p>
+        </div>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {MAIN_ENTRIES.map(entry => {
+            let percentText = ''
+            let progress = 0
+            if (entry.id === 'grammar') {
+              const doneCount = Object.keys(answers).length
+              progress = (doneCount / 300) * 100
+              percentText = `${doneCount}/300 câu`
+            } else {
+              const p = skillProgress[entry.id] || { total: 0, done: 0 }
+              progress = p.total ? (p.done / p.total) * 100 : 0
+              percentText = `${p.done}/${p.total} bài`
+            }
+            return (
+              <button
+                key={entry.id}
+                onClick={() => go(entry.id)}
+                className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${entry.gradient} p-6 text-left text-white shadow-lg transition hover:scale-[1.02] hover:shadow-2xl active:scale-[.99]`}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-white/20 backdrop-blur">
+                    <span className="[&>svg]:h-7 [&>svg]:w-7">{entry.icon}</span>
+                  </div>
+                  <ChevronRight className="h-5 w-5 opacity-70 transition group-hover:translate-x-1" />
+                </div>
+
+                <h3 className="mt-5 text-2xl font-black">{entry.title}</h3>
+                <p className="mt-1 text-sm text-white/85">{entry.vi}</p>
+
+                <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
+                  {entry.tags.map(t => (
+                    <span key={t} className="rounded-full bg-white/15 px-2 py-0.5 backdrop-blur">{t}</span>
+                  ))}
+                </div>
+
+                <div className="mt-5">
+                  <div className="mb-1 flex justify-between text-xs text-white/85">
+                    <span>Tiến độ</span>
+                    <span className="tabular-nums">{percentText}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/20">
+                    <div className="h-full rounded-full bg-white/85 transition-all" style={{ width: `${Math.min(100, progress)}%` }} />
+                  </div>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* CONTINUE */}
       {session && !session.completed && (
         <Card className="border-blue-200 bg-blue-50 p-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -516,6 +623,7 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, openLesson,
         </Card>
       )}
 
+      {/* STATS */}
       <div className="grid gap-4 md:grid-cols-3">
         <Stat icon={<ListChecks />} title="Câu đã làm" value={`${done}/300`} />
         <Stat icon={<CheckCircle2 />} title="Đáp án đúng" value={correct} />
@@ -523,40 +631,29 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, openLesson,
           value={last ? `${last.score}/${last.total}` : 'Chưa có'}
           note={last && lessonName(last.lesson)} />
       </div>
-
-      <LessonGrid compact open={openLesson} practice={id => startQuiz(id, 'practice')} exam={id => startQuiz(id, 'exam')} history={history} />
     </div>
   )
 }
 
 // ============================================================
-// Lessons Hub — gộp 4 kỹ năng + 13 bài ngữ pháp
+// Grammar page — 13 bài
 // ============================================================
-function LessonsHub({ answers, history, skillProgress, openLesson, practice, exam, go }) {
+function GrammarPage({ answers, history, openLesson, practice, exam, go }) {
   return (
-    <div className="space-y-10">
-      <section className="rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-violet-800 p-8 text-white shadow-xl md:p-12">
-        <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">Lộ trình đầy đủ</span>
-        <h1 className="mt-4 text-4xl font-black leading-tight md:text-5xl">Bài học & Luyện kỹ năng</h1>
+    <div className="space-y-6">
+      <button onClick={() => go('home')} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+        <ArrowLeft className="h-4 w-4" /> Quay lại trang chủ
+      </button>
+
+      <header className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-800 p-8 text-white shadow-lg md:p-10">
+        <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">13 bài • 300 câu</span>
+        <h1 className="mt-4 text-3xl font-black md:text-4xl">Ngữ pháp tiếng Anh</h1>
         <p className="mt-3 max-w-2xl text-blue-100">
-          Bắt đầu từ lý thuyết ngữ pháp, sau đó rèn 4 kỹ năng Nghe – Nói – Đọc – Viết
-          với phản hồi tức thì ngay trong trình duyệt.
+          Học lý thuyết có ví dụ, sau đó luyện tập (có giải thích) hoặc kiểm tra (không hiện đáp án ngay).
         </p>
-      </section>
+      </header>
 
-      {/* 4 kỹ năng */}
-      <SkillsSection go={go} progress={skillProgress} />
-
-      {/* 13 bài ngữ pháp */}
-      <section>
-        <div className="mb-5">
-          <h2 className="text-2xl font-black md:text-3xl">Ngữ pháp – 13 bài</h2>
-          <p className="mt-1 text-slate-500">
-            Từ cấu trúc câu cơ bản đến câu điều kiện, bị động, mệnh đề quan hệ.
-          </p>
-        </div>
-        <LessonGrid open={openLesson} practice={practice} exam={exam} history={history} answers={answers} />
-      </section>
+      <LessonGrid open={openLesson} practice={practice} exam={exam} history={history} answers={answers} />
     </div>
   )
 }
@@ -564,17 +661,9 @@ function LessonsHub({ answers, history, skillProgress, openLesson, practice, exa
 // ============================================================
 // Lesson grid + Lesson page
 // ============================================================
-function LessonGrid({ open, practice, exam, history = [], answers = {}, compact = false }) {
+function LessonGrid({ open, practice, exam, history = [], answers = {} }) {
   return (
-    <section className="mt-2">
-      {compact && (
-        <div className="mb-5 flex items-end justify-between">
-          <div>
-            <h2 className="text-3xl font-black">13 bài học</h2>
-            <p className="text-slate-500">Chọn chế độ học có giải thích hoặc kiểm tra không hiện đáp án ngay.</p>
-          </div>
-        </div>
-      )}
+    <section>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {LESSONS.map(l => {
           const qs = QUESTIONS.filter(q => q.lesson === l.id)
@@ -594,14 +683,12 @@ function LessonGrid({ open, practice, exam, history = [], answers = {}, compact 
               </div>
               <h3 className="mt-4 text-lg font-bold">{l.title}</h3>
               <p className="mt-1 min-h-10 text-sm text-slate-500">{l.short}</p>
-              {!compact && (
-                <div className="mt-3">
-                  <div className="mb-1 flex justify-between text-xs text-slate-400 tabular-nums">
-                    <span>Đã làm</span><span>{n}/{qs.length}</span>
-                  </div>
-                  <Progress value={(n / qs.length) * 100} />
+              <div className="mt-3">
+                <div className="mb-1 flex justify-between text-xs text-slate-400 tabular-nums">
+                  <span>Đã làm</span><span>{n}/{qs.length}</span>
                 </div>
-              )}
+                <Progress value={(n / qs.length) * 100} />
+              </div>
               <div className="mt-5 grid grid-cols-3 gap-2">
                 <Btn variant="ghost" className="px-2" onClick={() => open(l.id)}>Học</Btn>
                 <Btn className="px-2" onClick={() => practice(l.id)}>Luyện</Btn>
@@ -643,7 +730,7 @@ function LessonPage({ lesson, go, practice, exam }) {
         ))}
       </div>
       <div className="mt-6 flex flex-wrap justify-between gap-3">
-        <Btn variant="ghost" onClick={() => go('lessons')}>Danh sách bài</Btn>
+        <Btn variant="ghost" onClick={() => go('grammar')}>Danh sách bài</Btn>
         <div className="flex gap-2">
           <Btn variant="ghost" onClick={exam}>Kiểm tra</Btn>
           <Btn onClick={practice}>Luyện tập có giải thích</Btn>
@@ -1029,8 +1116,8 @@ function MobileNav({ go }) {
       <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('home')}>
         <Home className="h-5 w-5" />Trang chủ
       </button>
-      <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('lessons')}>
-        <BookOpen className="h-5 w-5" />Bài học
+      <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('grammar')}>
+        <BookOpen className="h-5 w-5" />Ngữ pháp
       </button>
       <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('progress')}>
         <Trophy className="h-5 w-5" />Kết quả
