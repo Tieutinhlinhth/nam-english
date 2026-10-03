@@ -1,6 +1,6 @@
 NAM ENGLISH SOURCE SNAPSHOT
-Generated: 2026-10-02 10:21:17 UTC
-Commit: 2a2c3a1cb35ff010642c0dd9d7ed8c301b1f38b2
+Generated: 2026-10-03 01:01:21 UTC
+Commit: 0fa3c90b0ebedc5cd04b19218d6317562e19b8d3
 
 ========================================
 PROJECT FILE TREE
@@ -29,7 +29,16 @@ PROJECT FILE TREE
 ./src/index.css
 ./src/main.jsx
 ./src/questions.js
+./src/skills/Listening.jsx
+./src/skills/Reading.jsx
+./src/skills/SkillsHub.jsx
+./src/skills/Speaking.jsx
+./src/skills/Writing.jsx
+./src/skills/Writting.jsx
+./src/skills/data.js
+./src/skills/utils.js
 ./supabase/migrate_phase3.sql
+./supabase/migrate_phase4.sql
 ./supabase/setup.sql
 ./vercel.json
 ./vite.config.js
@@ -67,183 +76,968 @@ FILE: src/App.jsx
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import {
-  ArrowLeft, ArrowRight, BarChart3, BookOpen, CheckCircle2, ChevronRight,
-  CircleHelp, Clock3, GraduationCap, History, Home, ListChecks, LogIn,
-  LogOut, Menu, RotateCcw, Target, Trophy, UserPlus, X, XCircle, User,
-  Eye, EyeOff, KeyRound, Cloud, CloudOff, RefreshCw, Save, ShieldCheck
+  ArrowLeft, ArrowRight, BarChart3, BookOpen, CheckCircle2,
+  GraduationCap, History, Home, ListChecks, LogIn, Menu, RotateCcw,
+  Target, Trophy, UserPlus, X, XCircle, User, Eye, EyeOff, KeyRound,
+  Cloud, CloudOff, RefreshCw, Save, ShieldCheck, Headphones, Sparkles
 } from 'lucide-react'
 import { LESSONS, QUESTIONS } from './questions'
+import SkillsSection from './skills/SkillsHub'
+import Listening from './skills/Listening'
+import Speaking from './skills/Speaking'
+import Reading from './skills/Reading'
+import Writing from './skills/Writing'
+import { SKILL_TOTALS } from './skills/data'
 
-const url=import.meta.env.VITE_SUPABASE_URL
-const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-const supabase=url&&key?createClient(url,key):null
-const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}}
-const save=(key,value)=>localStorage.setItem(key,JSON.stringify(value))
-const lessonName=id=>id===14?'Kiểm tra tổng hợp':LESSONS.find(x=>x.id===id)?.title||'Bài tập'
+const url = import.meta.env.VITE_SUPABASE_URL
+const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+const supabase = url && key ? createClient(url, key) : null
+const read = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb } catch { return fb } }
+const save = (k, v) => localStorage.setItem(k, JSON.stringify(v))
+const lessonName = id =>
+  id === 14 ? 'Kiểm tra tổng hợp' : LESSONS.find(x => x.id === id)?.title || 'Bài tập'
 
-const Btn=({children,className='',variant='primary',...p})=><button className={`rounded-xl px-4 py-2.5 font-semibold transition disabled:cursor-not-allowed disabled:opacity-45 ${variant==='primary'?'bg-blue-600 text-white hover:bg-blue-700':variant==='danger'?'bg-red-600 text-white hover:bg-red-700':'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'} ${className}`} {...p}>{children}</button>
-const Card=({children,className=''})=><div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</div>
-const Progress=({value,color='bg-blue-600'})=><div className="h-2.5 overflow-hidden rounded-full bg-slate-200"><div className={`h-full rounded-full transition-all ${color}`} style={{width:`${Math.min(100,Math.max(0,value))}%`}}/></div>
-const Stat=({icon,title,value,note})=><Card className="p-5"><div className="flex items-center gap-4"><div className="rounded-2xl bg-blue-100 p-3 text-blue-700">{icon}</div><div><div className="text-2xl font-black text-slate-900">{value}</div><div className="font-medium text-slate-600">{title}</div>{note&&<div className="text-xs text-slate-400">{note}</div>}</div></div></Card>
-
-export default function App(){
-  const [view,setView]=useState('home'),[lessonId,setLessonId]=useState(1)
-  const [answers,setAnswers]=useState(()=>read('eg-answers',{}))
-  const [history,setHistory]=useState(()=>read('eg-history',[]))
-  const [session,setSession]=useState(()=>read('eg-session',null))
-  const [user,setUser]=useState(null),[email,setEmail]=useState(''),[password,setPassword]=useState(''),[confirmPassword,setConfirmPassword]=useState(''),[displayName,setDisplayName]=useState(''),[authMode,setAuthMode]=useState('login'),[notice,setNotice]=useState(''),[syncing,setSyncing]=useState(false),[syncStatus,setSyncStatus]=useState('local'),[menu,setMenu]=useState(false),[showPassword,setShowPassword]=useState(false),[online,setOnline]=useState(navigator.onLine),[recovery,setRecovery]=useState(false),[newPassword,setNewPassword]=useState('')
-
-  useEffect(()=>save('eg-answers',answers),[answers])
-  useEffect(()=>save('eg-history',history),[history])
-  useEffect(()=>{session?save('eg-session',session):localStorage.removeItem('eg-session')},[session])
-  useEffect(()=>{const on=()=>setOnline(true),off=()=>setOnline(false);window.addEventListener('online',on);window.addEventListener('offline',off);return()=>{window.removeEventListener('online',on);window.removeEventListener('offline',off)}},[])
-  useEffect(()=>{
-    if(!supabase)return
-    supabase.auth.getSession().then(({data})=>{setUser(data.session?.user||null);setDisplayName(data.session?.user?.user_metadata?.display_name||'')})
-    const {data}=supabase.auth.onAuthStateChange((event,ses)=>{
-      setUser(ses?.user||null);setDisplayName(ses?.user?.user_metadata?.display_name||'')
-      if(event==='PASSWORD_RECOVERY'){setRecovery(true);setView('auth')}
-    })
-    return()=>data.subscription.unsubscribe()
-  },[])
-  useEffect(()=>{
-    if(!supabase||!user||!online)return
-    setSyncing(true);setSyncStatus('syncing')
-    Promise.all([
-      supabase.from('learning_progress').select('answers,history,current_session,updated_at').eq('user_id',user.id).maybeSingle(),
-      supabase.from('profiles').select('display_name').eq('id',user.id).maybeSingle()
-    ]).then(([progress,profile])=>{
-      if(progress.error){setSyncStatus('error')}else{
-        const cloud=progress.data||{}
-        setAnswers(local=>({...cloud.answers,...local}))
-        setHistory(local=>mergeHistory(cloud.history||[],local))
-        setSession(local=>local||cloud.current_session||null)
-        setSyncStatus('saved')
-      }
-      if(profile.data?.display_name)setDisplayName(profile.data.display_name)
-    }).finally(()=>setSyncing(false))
-  },[user?.id,online])
-  useEffect(()=>{
-    if(!supabase||!user||!online)return
-    const t=setTimeout(async()=>{
-      setSyncing(true);setSyncStatus('syncing')
-      const {error}=await supabase.from('learning_progress').upsert({user_id:user.id,answers,history,current_session:session,updated_at:new Date().toISOString()},{onConflict:'user_id'})
-      setSyncStatus(error?'error':'saved');setSyncing(false)
-    },900)
-    return()=>clearTimeout(t)
-  },[answers,history,session,user?.id,online])
-
-  const lesson=LESSONS.find(x=>x.id===lessonId)
-  const sessionQuestions=useMemo(()=>session?.questionIds?.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean)||[],[session?.questionIds])
-  const current=sessionQuestions[session?.index||0]
-  const currentChoice=current?session?.responses?.[current.id]:undefined
-  const done=Object.keys(answers).length
-  const correct=Object.entries(answers).filter(([id,v])=>QUESTIONS.find(q=>q.id===+id)?.answer===v).length
-
-  const go=v=>{setView(v);setMenu(false);window.scrollTo(0,0)}
-  const startQuiz=(lessonNumber,mode='practice',ids=null)=>{
-    const pool=ids?.length?ids:QUESTIONS.filter(q=>q.lesson===lessonNumber).map(q=>q.id)
-    setSession({lesson:lessonNumber,mode,questionIds:pool,index:0,responses:{},checked:{},startedAt:new Date().toISOString()})
-    go('quiz')
-  }
-  const continueQuiz=()=>session&&go('quiz')
-  const selectChoice=i=>{if(!current||session.checked?.[current.id]||session.completed)return;setSession(s=>({...s,responses:{...s.responses,[current.id]:i}}))}
-  const checkCurrent=()=>{
-    if(currentChoice===undefined)return
-    setSession(s=>({...s,checked:{...s.checked,[current.id]:true}}))
-    setAnswers(a=>({...a,[current.id]:currentChoice}))
-  }
-  const move=delta=>setSession(s=>({...s,index:Math.min(s.questionIds.length-1,Math.max(0,s.index+delta))}))
-  const jump=index=>setSession(s=>({...s,index}))
-  const finishQuiz=()=>{
-    const responses=session.responses||{}
-    Object.entries(responses).forEach(([id,v])=>setAnswers(a=>({...a,[id]:v})))
-    const qs=sessionQuestions
-    const right=qs.filter(q=>responses[q.id]===q.answer).length
-    const wrongIds=qs.filter(q=>responses[q.id]!==q.answer).map(q=>q.id)
-    const attempt={id:Date.now(),lesson:session.lesson,mode:session.mode,score:right,total:qs.length,wrongIds,date:new Date().toISOString(),responses}
-    setHistory(h=>[attempt,...h].slice(0,100))
-    setSession(s=>({...s,completed:true,result:attempt}))
-    go('result')
-  }
-  const quitQuiz=()=>{if(confirm('Thoát bài? Tiến độ hiện tại vẫn được lưu.'))go('home')}
-  const clearSession=()=>{setSession(null);go('home')}
-  const auth=async e=>{
-    e.preventDefault();setNotice('')
-    if(!supabase){setNotice('Chưa kết nối Supabase. Hãy tạo file .env.local.');return}
-    if(authMode==='signup'&&password!==confirmPassword){setNotice('Hai mật khẩu chưa khớp.');return}
-    setNotice('Đang xử lý...')
-    const r=authMode==='login'
-      ?await supabase.auth.signInWithPassword({email,password})
-      :await supabase.auth.signUp({email,password,options:{data:{display_name:displayName},emailRedirectTo:window.location.origin}})
-    setNotice(r.error?translateAuthError(r.error.message):authMode==='login'?'Đăng nhập thành công.':'Đăng ký thành công. Hãy kiểm tra email nếu hệ thống yêu cầu xác nhận.')
-    if(!r.error&&authMode==='login')go('home')
-  }
-  const logout=async(scope='local')=>{await supabase?.auth.signOut({scope});setUser(null);setSyncStatus('local');go('home')}
-  const forgotPassword=async()=>{
-    if(!supabase||!email){setNotice('Hãy nhập email trước.');return}
-    const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin})
-    setNotice(error?translateAuthError(error.message):'Đã gửi liên kết đặt lại mật khẩu. Hãy kiểm tra email.')
-  }
-  const updatePassword=async()=>{
-    if(newPassword.length<6){setNotice('Mật khẩu mới cần ít nhất 6 ký tự.');return}
-    const {error}=await supabase.auth.updateUser({password:newPassword})
-    setNotice(error?translateAuthError(error.message):'Đã đổi mật khẩu thành công.');if(!error){setRecovery(false);setNewPassword('')}
-  }
-  const saveProfile=async()=>{
-    if(!supabase||!user)return
-    setSyncStatus('syncing')
-    const [a,b]=await Promise.all([supabase.auth.updateUser({data:{display_name:displayName}}),supabase.from('profiles').upsert({id:user.id,display_name:displayName,updated_at:new Date().toISOString()},{onConflict:'id'})])
-    setNotice(a.error||b.error?'Không thể lưu hồ sơ lúc này.':'Đã lưu hồ sơ.');setSyncStatus(a.error||b.error?'error':'saved')
-  }
-  const syncNow=async()=>{
-    if(!supabase||!user||!online)return
-    setSyncing(true);setSyncStatus('syncing')
-    const {error}=await supabase.from('learning_progress').upsert({user_id:user.id,answers,history,current_session:session,updated_at:new Date().toISOString()},{onConflict:'user_id'})
-    setSyncStatus(error?'error':'saved');setSyncing(false)
-  }
-
-  return <div className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
-    <Header user={user} displayName={displayName} syncing={syncing} syncStatus={syncStatus} online={online} logout={logout} go={go} menu={menu} setMenu={setMenu}/>
-    <main className="mx-auto max-w-7xl px-4 py-8">
-      {view==='home'&&<HomePage done={done} correct={correct} session={session} continueQuiz={continueQuiz} startQuiz={startQuiz} openLesson={id=>{setLessonId(id);go('lesson')}} go={go} history={history}/>} 
-      {view==='lessons'&&<LessonGrid answers={answers} history={history} open={id=>{setLessonId(id);go('lesson')}} practice={id=>startQuiz(id,'practice')} exam={id=>startQuiz(id,'exam')}/>} 
-      {view==='lesson'&&lesson&&<LessonPage lesson={lesson} go={go} practice={()=>startQuiz(lesson.id,'practice')} exam={()=>startQuiz(lesson.id,'exam')}/>} 
-      {view==='quiz'&&session&&current&&<QuizPage session={session} questions={sessionQuestions} current={current} choice={currentChoice} selectChoice={selectChoice} checkCurrent={checkCurrent} move={move} jump={jump} finish={finishQuiz} quit={quitQuiz}/>} 
-      {view==='result'&&session?.result&&<ResultPage attempt={session.result} questions={sessionQuestions} startQuiz={startQuiz} clear={clearSession} go={go}/>} 
-      {view==='progress'&&<ProgressPage answers={answers} history={history} startQuiz={startQuiz} go={go}/>} 
-      {view==='auth'&&<AuthPage authMode={authMode} setAuthMode={setAuthMode} email={email} setEmail={setEmail} password={password} setPassword={setPassword} confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword} displayName={displayName} setDisplayName={setDisplayName} notice={notice} auth={auth} forgotPassword={forgotPassword} showPassword={showPassword} setShowPassword={setShowPassword} recovery={recovery} newPassword={newPassword} setNewPassword={setNewPassword} updatePassword={updatePassword}/>} 
-      {view==='profile'&&user&&<ProfilePage user={user} displayName={displayName} setDisplayName={setDisplayName} notice={notice} saveProfile={saveProfile} syncStatus={syncStatus} online={online} syncNow={syncNow} logout={logout}/>} 
-    </main>
-    <MobileNav go={go}/>
-  </div>
+// ============================================================
+// UI primitives
+// ============================================================
+const BTN_VARIANTS = {
+  primary:      'bg-blue-600 text-white hover:bg-blue-700 shadow-sm',
+  danger:       'bg-red-600 text-white hover:bg-red-700 shadow-sm',
+  ghost:        'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50',
+  outline:      'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50',
+  white:        'bg-white text-blue-700 hover:bg-blue-50 shadow-sm',
+  accent:       'bg-rose-500 text-white hover:bg-rose-600 shadow-sm',
+  glass:        'border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur',
+  'glass-solid':'bg-white/95 text-blue-700 hover:bg-white shadow-sm'
 }
 
-function Header({user,displayName,syncing,syncStatus,online,logout,go,menu,setMenu}){const syncLabel=!online?'Ngoại tuyến':syncing||syncStatus==='syncing'?'Đang đồng bộ':syncStatus==='error'?'Lỗi đồng bộ':syncStatus==='saved'?'Đã lưu':'Lưu cục bộ';return <header className="sticky top-0 z-50 border-b bg-white/95 backdrop-blur"><div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3"><button onClick={()=>go('home')} className="flex items-center gap-2 font-black"><span className="rounded-xl bg-blue-600 p-2 text-white"><GraduationCap/></span>Nam English</button><nav className="hidden gap-1 md:flex"><NavButton onClick={()=>go('home')} icon={<Home/>}>Trang chủ</NavButton><NavButton onClick={()=>go('lessons')} icon={<BookOpen/>}>Bài học</NavButton><NavButton onClick={()=>go('progress')} icon={<BarChart3/>}>Kết quả</NavButton>{user&&<NavButton onClick={()=>go('profile')} icon={<User/>}>Tài khoản</NavButton>}</nav><div className="flex items-center gap-2"><span className={`hidden items-center gap-1 text-xs sm:flex ${syncStatus==='error'?'text-red-600':'text-slate-400'}`}>{online?<Cloud className="h-4 w-4"/>:<CloudOff className="h-4 w-4"/>}{syncLabel}</span>{user?<button className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium md:block" onClick={()=>go('profile')}>{displayName||user.email}</button>:<Btn onClick={()=>go('auth')}><LogIn className="mr-2 inline h-4 w-4"/>Đăng nhập</Btn>}<button className="rounded-lg p-2 md:hidden" onClick={()=>setMenu(!menu)}><Menu/></button></div></div>{menu&&<div className="grid border-t p-3 md:hidden"><button className="p-3 text-left" onClick={()=>go('home')}>Trang chủ</button><button className="p-3 text-left" onClick={()=>go('lessons')}>Bài học</button><button className="p-3 text-left" onClick={()=>go('progress')}>Kết quả</button>{user?<><button className="p-3 text-left" onClick={()=>go('profile')}>Tài khoản</button><button className="p-3 text-left text-red-600" onClick={()=>logout('local')}>Đăng xuất</button></>:<button className="p-3 text-left" onClick={()=>go('auth')}>Đăng nhập</button>}</div>}</header>}
-function NavButton({icon,children,...p}){return <button className="flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-slate-600 hover:bg-slate-100" {...p}>{<span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>}{children}</button>}
+const Btn = ({ children, className = '', variant = 'primary', ...p }) => (
+  <button
+    className={`rounded-xl px-4 py-2.5 font-semibold transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-45 ${
+      BTN_VARIANTS[variant] || BTN_VARIANTS.primary
+    } ${className}`}
+    {...p}
+  >
+    {children}
+  </button>
+)
 
-function HomePage({done,correct,session,continueQuiz,startQuiz,openLesson,go,history}){const last=history[0];return <div className="space-y-8"><section className="grid gap-8 rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl md:grid-cols-2 md:p-12"><div><span className="rounded-full bg-white/15 px-3 py-1 text-sm">13 bài • 300 câu</span><h1 className="mt-4 text-4xl font-black md:text-6xl">Học rõ. Luyện thật. Nhớ lâu.</h1><p className="mt-4 text-lg text-blue-100">Lý thuyết đầy đủ, bài tập theo mức độ và kết quả chi tiết cho từng lần làm.</p><div className="mt-7 flex flex-wrap gap-3"><Btn className="bg-white text-blue-700 hover:bg-blue-50" onClick={()=>go('lessons')}>Chọn bài học</Btn><Btn variant="ghost" className="border-white/40 bg-transparent text-white hover:bg-white/10" onClick={()=>startQuiz(14,'exam')}>Kiểm tra tổng hợp</Btn></div></div><Card className="border-0 bg-white/10 p-6 text-white"><div className="flex justify-between"><span>Tiến độ toàn bộ</span><strong>{done}/300</strong></div><div className="mt-3"><Progress value={done/3}/></div><div className="mt-6 grid grid-cols-2 gap-3 text-center"><div className="rounded-2xl bg-white/10 p-4"><div className="text-3xl font-bold">{correct}</div><div>Câu đúng</div></div><div className="rounded-2xl bg-white/10 p-4"><div className="text-3xl font-bold">{done?Math.round(correct/done*100):0}%</div><div>Chính xác</div></div></div></Card></section>{session&&!session.completed&&<Card className="border-blue-200 bg-blue-50 p-5"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><div className="font-bold text-blue-900">Tiếp tục bài đang làm</div><p className="text-sm text-blue-700">{lessonName(session.lesson)} • Câu {session.index+1}/{session.questionIds.length} • {Object.keys(session.responses||{}).length} câu đã trả lời</p></div><Btn onClick={continueQuiz}>Tiếp tục<ArrowRight className="ml-2 inline h-4 w-4"/></Btn></div></Card>}<div className="grid gap-4 md:grid-cols-3"><Stat icon={<ListChecks/>} title="Câu đã làm" value={`${done}/300`}/><Stat icon={<CheckCircle2/>} title="Đáp án đúng" value={correct}/><Stat icon={<History/>} title="Lượt gần nhất" value={last?`${last.score}/${last.total}`:'Chưa có'} note={last&&lessonName(last.lesson)}/></div><LessonGrid compact open={openLesson} practice={id=>startQuiz(id,'practice')} exam={id=>startQuiz(id,'exam')} history={history}/></div>}
+const Card = ({ children, className = '' }) => (
+  <div className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}>{children}</div>
+)
 
-function LessonGrid({open,practice,exam,history=[],answers={},compact=false}){return <section className="mt-8"><div className="mb-5 flex items-end justify-between"><div><h2 className="text-3xl font-bold">13 bài học</h2><p className="text-slate-500">Chọn chế độ học có giải thích hoặc kiểm tra không hiện đáp án ngay.</p></div></div><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{LESSONS.map(l=>{const qs=QUESTIONS.filter(q=>q.lesson===l.id);const n=qs.filter(q=>answers[q.id]!==undefined).length;const best=history.filter(h=>h.lesson===l.id).sort((a,b)=>b.score/b.total-a.score/a.total)[0];return <Card key={l.id} className="p-5"><div className="flex justify-between"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-100 font-bold text-blue-700">{l.id}</div>{best&&<span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">Cao nhất {best.score}/{best.total}</span>}</div><h3 className="mt-4 text-lg font-bold">{l.title}</h3><p className="mt-1 min-h-10 text-sm text-slate-500">{l.short}</p>{!compact&&<div className="mt-3"><div className="mb-1 flex justify-between text-xs text-slate-400"><span>Đã làm</span><span>{n}/{qs.length}</span></div><Progress value={n/qs.length*100}/></div>}<div className="mt-5 grid grid-cols-3 gap-2"><Btn variant="ghost" className="px-2" onClick={()=>open(l.id)}>Học</Btn><Btn className="px-2" onClick={()=>practice(l.id)}>Luyện</Btn><Btn variant="ghost" className="px-2" onClick={()=>exam(l.id)}>Kiểm tra</Btn></div></Card>})}</div></section>}
+const Progress = ({ value, color = 'bg-blue-600' }) => (
+  <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+    <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
+  </div>
+)
 
-function LessonPage({lesson,go,practice,exam}){return <div className="mx-auto max-w-4xl"><div className="rounded-3xl bg-blue-700 p-7 text-white"><div>Bài {lesson.id}/13</div><h1 className="mt-2 text-3xl font-bold">{lesson.title}</h1><p className="mt-2 text-blue-100">{lesson.short}</p></div><div className="mt-6 space-y-4">{lesson.sections.map((s,i)=><Card key={i} className="p-6"><div className="flex items-start gap-4"><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-100 font-bold text-blue-700">{i+1}</span><div><h2 className="text-xl font-bold">{s.heading}</h2><p className="mt-2 leading-7 text-slate-700">{s.text}</p>{s.formula&&<div className="mt-4 rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4 font-mono font-bold text-amber-950">{s.formula}</div>}{s.example&&<div className="mt-3 rounded-xl bg-blue-50 p-4 text-blue-900"><strong>Ví dụ: </strong>{s.example}</div>}</div></div></Card>)}</div><div className="mt-6 flex flex-wrap justify-between gap-3"><Btn variant="ghost" onClick={()=>go('lessons')}>Danh sách bài</Btn><div className="flex gap-2"><Btn variant="ghost" onClick={exam}>Kiểm tra</Btn><Btn onClick={practice}>Luyện tập có giải thích</Btn></div></div></div>}
+const Stat = ({ icon, title, value, note }) => (
+  <Card className="p-5">
+    <div className="flex items-center gap-4">
+      <div className="rounded-2xl bg-blue-100 p-3 text-blue-700">{icon}</div>
+      <div>
+        <div className="text-2xl font-black tabular-nums text-slate-900">{value}</div>
+        <div className="font-medium text-slate-600">{title}</div>
+        {note && <div className="text-xs text-slate-400">{note}</div>}
+      </div>
+    </div>
+  </Card>
+)
 
-function QuizPage({session,questions,current,choice,selectChoice,checkCurrent,move,jump,finish,quit}){const isPractice=session.mode==='practice',answered=Object.keys(session.responses||{}).length,checked=session.checked?.[current.id];return <div className="mx-auto max-w-5xl"><div className="mb-5 flex flex-wrap items-center justify-between gap-3"><div><div className="text-sm text-slate-500">{lessonName(session.lesson)} • {isPractice?'Luyện tập':'Kiểm tra'}</div><h1 className="text-2xl font-bold">Câu {session.index+1}/{questions.length}</h1></div><Btn variant="ghost" onClick={quit}><X className="mr-2 inline h-4 w-4"/>Thoát</Btn></div><Progress value={(session.index+1)/questions.length*100}/><div className="mt-6 grid gap-5 lg:grid-cols-[1fr_270px]"><Card className="p-6 md:p-7"><div className="mb-3 flex flex-wrap gap-2"><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{current.type}</span><span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{current.level}</span></div><h2 className="text-xl font-semibold leading-8">{current.q}</h2><div className="mt-6 space-y-3">{current.choices.map((x,i)=>{const right=i===current.answer,chosen=i===choice;return <button disabled={isPractice&&checked} key={i} onClick={()=>selectChoice(i)} className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${isPractice&&checked&&right?'border-emerald-500 bg-emerald-50':isPractice&&checked&&chosen&&!right?'border-red-500 bg-red-50':chosen?'border-blue-600 bg-blue-50':'border-slate-200 hover:border-blue-300'}`}><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border">{String.fromCharCode(65+i)}</span><span>{x}</span>{isPractice&&checked&&right&&<CheckCircle2 className="ml-auto text-emerald-600"/>}{isPractice&&checked&&chosen&&!right&&<XCircle className="ml-auto text-red-600"/>}</button>})}</div>{isPractice&&checked&&<div className="mt-5 rounded-2xl bg-amber-50 p-4 text-amber-950"><strong>{choice===current.answer?'Chính xác.':'Chưa đúng.'}</strong> {current.explain}</div>}<div className="mt-7 flex flex-wrap justify-between gap-2"><Btn variant="ghost" disabled={session.index===0} onClick={()=>move(-1)}><ArrowLeft className="mr-2 inline h-4 w-4"/>Câu trước</Btn><div className="flex gap-2">{isPractice&&!checked&&<Btn disabled={choice===undefined} onClick={checkCurrent}>Kiểm tra</Btn>}{session.index<questions.length-1?<Btn disabled={isPractice&&!checked} onClick={()=>move(1)}>Câu sau<ArrowRight className="ml-2 inline h-4 w-4"/></Btn>:<Btn disabled={answered===0} onClick={finish}>Nộp bài</Btn>}</div></div></Card><QuestionNavigator questions={questions} session={session} jump={jump} finish={finish}/></div></div>}
+// ============================================================
+// App
+// ============================================================
+export default function App() {
+  const [view, setView] = useState('home'), [lessonId, setLessonId] = useState(1)
+  const [answers, setAnswers] = useState(() => read('eg-answers', {}))
+  const [history, setHistory] = useState(() => read('eg-history', []))
+  const [session, setSession] = useState(() => read('eg-session', null))
+  const [skillProgress, setSkillProgress] = useState(() => read('eg-skills', {}))
+  const [user, setUser] = useState(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [authMode, setAuthMode] = useState('login')
+  const [notice, setNotice] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [syncStatus, setSyncStatus] = useState('local')
+  const [menu, setMenu] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [online, setOnline] = useState(navigator.onLine)
+  const [recovery, setRecovery] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
 
-function QuestionNavigator({questions,session,jump,finish}){return <Card className="h-fit p-4 lg:sticky lg:top-24"><div className="flex items-center justify-between"><h3 className="font-bold">Danh sách câu</h3><span className="text-sm text-slate-500">{Object.keys(session.responses||{}).length}/{questions.length}</span></div><div className="mt-4 grid grid-cols-5 gap-2">{questions.map((q,i)=>{const response=session.responses?.[q.id],checked=session.checked?.[q.id],right=checked&&response===q.answer,wrong=checked&&response!==q.answer;return <button title={`Câu ${i+1}`} onClick={()=>jump(i)} key={q.id} className={`h-9 rounded-lg text-sm font-bold ${i===session.index?'ring-2 ring-blue-600 ring-offset-2':right?'bg-emerald-500 text-white':wrong?'bg-red-500 text-white':response!==undefined?'bg-blue-600 text-white':'bg-slate-100 text-slate-600'}`}>{i+1}</button>})}</div><div className="mt-4 space-y-1 text-xs text-slate-500"><div><span className="mr-2 inline-block h-3 w-3 rounded bg-blue-600"/>Đã trả lời</div>{session.mode==='practice'&&<><div><span className="mr-2 inline-block h-3 w-3 rounded bg-emerald-500"/>Đúng</div><div><span className="mr-2 inline-block h-3 w-3 rounded bg-red-500"/>Sai</div></>}</div>{session.mode==='exam'&&<Btn className="mt-5 w-full" disabled={!Object.keys(session.responses||{}).length} onClick={finish}>Nộp bài</Btn>}</Card>}
+  useEffect(() => save('eg-answers', answers), [answers])
+  useEffect(() => save('eg-history', history), [history])
+  useEffect(() => save('eg-skills', skillProgress), [skillProgress])
+  useEffect(() => { session ? save('eg-session', session) : localStorage.removeItem('eg-session') }, [session])
 
-function ResultPage({attempt,questions,startQuiz,clear,go}){const wrong=questions.filter(q=>attempt.wrongIds.includes(q.id));const percent=Math.round(attempt.score/attempt.total*100);return <div className="mx-auto max-w-4xl"><div className="text-center"><div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-amber-100 text-amber-600"><Trophy size={48}/></div><h1 className="mt-5 text-4xl font-black">{percent>=80?'Hoàn thành tốt!':percent>=50?'Bạn đã hoàn thành':'Hãy ôn lại thêm'}</h1><p className="mt-2 text-slate-500">{lessonName(attempt.lesson)}</p></div><div className="mt-7 grid gap-4 md:grid-cols-3"><Stat icon={<Target/>} title="Điểm" value={`${attempt.score}/${attempt.total}`}/><Stat icon={<BarChart3/>} title="Chính xác" value={`${percent}%`}/><Stat icon={<XCircle/>} title="Câu cần ôn" value={wrong.length}/></div>{wrong.length>0&&<Card className="mt-6 p-6"><h2 className="text-xl font-bold">Các câu trả lời sai hoặc bỏ trống</h2><div className="mt-4 space-y-4">{wrong.map((q,i)=><div key={q.id} className="rounded-xl border border-red-100 bg-red-50 p-4"><div className="font-semibold">{i+1}. {q.q}</div><div className="mt-2 text-sm text-red-700">Đáp án đúng: {q.choices[q.answer]}</div><div className="mt-1 text-sm text-slate-600">{q.explain}</div></div>)}</div></Card>}<div className="mt-6 flex flex-wrap justify-center gap-3">{wrong.length>0&&<Btn variant="danger" onClick={()=>startQuiz(attempt.lesson,'practice',wrong.map(q=>q.id))}><RotateCcw className="mr-2 inline h-4 w-4"/>Làm lại câu sai</Btn>}<Btn variant="ghost" onClick={()=>startQuiz(attempt.lesson,attempt.mode)}>Làm lại toàn bài</Btn><Btn onClick={()=>{clear();go('progress')}}>Xem tiến độ</Btn></div></div>}
+  useEffect(() => {
+    const on = () => setOnline(true), off = () => setOnline(false)
+    window.addEventListener('online', on); window.addEventListener('offline', off)
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+  }, [])
 
-function ProgressPage({answers,history,startQuiz}){const done=Object.keys(answers).length,correct=Object.entries(answers).filter(([id,v])=>QUESTIONS.find(q=>q.id===+id)?.answer===v).length;const wrongIds=Object.entries(answers).filter(([id,v])=>QUESTIONS.find(q=>q.id===+id)?.answer!==v).map(([id])=>+id);return <div><div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-3xl font-bold">Kết quả học tập</h1><p className="mt-2 text-slate-500">Theo dõi điểm cao nhất, lần gần nhất và những câu cần ôn.</p></div>{wrongIds.length>0&&<Btn variant="danger" onClick={()=>startQuiz(0,'practice',wrongIds)}><RotateCcw className="mr-2 inline h-4 w-4"/>Luyện {wrongIds.length} câu sai</Btn>}</div><div className="mt-6 grid gap-4 md:grid-cols-3"><Stat icon={<ListChecks/>} title="Đã làm" value={`${done}/300`}/><Stat icon={<CheckCircle2/>} title="Câu đúng" value={correct}/><Stat icon={<Target/>} title="Độ chính xác" value={`${done?Math.round(correct/done*100):0}%`}/></div><div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]"><Card className="p-6"><h2 className="text-xl font-bold">Theo từng bài</h2><div className="mt-5 space-y-5">{LESSONS.map(l=>{const qs=QUESTIONS.filter(q=>q.lesson===l.id),n=qs.filter(q=>answers[q.id]!==undefined).length,attempts=history.filter(h=>h.lesson===l.id),last=attempts[0],best=[...attempts].sort((a,b)=>b.score/b.total-a.score/a.total)[0];return <div key={l.id}><div className="mb-2 flex flex-wrap justify-between gap-2 text-sm"><span className="font-medium">Bài {l.id}: {l.title}</span><span className="text-slate-500">Đã làm {n}/{qs.length}{best?` • Cao nhất ${best.score}/${best.total}`:''}{last?` • Gần nhất ${last.score}/${last.total}`:''}</span></div><Progress value={n/qs.length*100}/></div>})}</div></Card><Card className="p-6"><h2 className="text-xl font-bold">Lịch sử gần đây</h2><div className="mt-4 space-y-3">{history.length?history.slice(0,10).map(h=><div key={h.id} className="rounded-xl bg-slate-50 p-3"><div className="flex justify-between"><strong>{lessonName(h.lesson)}</strong><span className="font-bold text-blue-700">{h.score}/{h.total}</span></div><div className="mt-1 text-xs text-slate-400">{new Date(h.date).toLocaleString('vi-VN')} • {h.mode==='practice'?'Luyện tập':'Kiểm tra'}</div></div>):<p className="text-slate-500">Chưa có lượt làm nào.</p>}</div></Card></div></div>}
+  useEffect(() => {
+    setSkillProgress(p => ({
+      listening: { total: SKILL_TOTALS.listening, done: 0, items: {}, ...p.listening },
+      speaking:  { total: SKILL_TOTALS.speaking,  done: 0, items: {}, ...p.speaking  },
+      reading:   { total: SKILL_TOTALS.reading,   done: 0, items: {}, ...p.reading   },
+      writing:   { total: SKILL_TOTALS.writing,   done: 0, items: {}, ...p.writing   }
+    }))
+  }, [])
 
-function AuthPage({authMode,setAuthMode,email,setEmail,password,setPassword,confirmPassword,setConfirmPassword,displayName,setDisplayName,notice,auth,forgotPassword,showPassword,setShowPassword,recovery,newPassword,setNewPassword,updatePassword}){if(recovery)return <div className="mx-auto max-w-md py-10"><Card className="p-6"><div className="flex items-center gap-3"><KeyRound className="text-blue-600"/><h1 className="text-2xl font-bold">Đặt mật khẩu mới</h1></div><div className="relative mt-5"><input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12" type={showPassword?'text':'password'} minLength="6" placeholder="Mật khẩu mới" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button className="absolute right-3 top-3 text-slate-400" onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff/>:<Eye/>}</button></div><Btn className="mt-4 w-full" onClick={updatePassword}>Cập nhật mật khẩu</Btn>{notice&&<p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}</Card></div>;return <div className="mx-auto max-w-md py-10"><Card className="p-6"><div className="flex items-center gap-3"><ShieldCheck className="text-blue-600"/><h1 className="text-2xl font-bold">{authMode==='login'?'Đăng nhập':'Tạo tài khoản'}</h1></div><form onSubmit={auth} className="mt-5 space-y-4">{authMode==='signup'&&<input className="w-full rounded-xl border border-slate-300 px-4 py-3" required placeholder="Tên hiển thị" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>}<input className="w-full rounded-xl border border-slate-300 px-4 py-3" type="email" required placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)}/><div className="relative"><input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12" type={showPassword?'text':'password'} minLength="6" required placeholder="Mật khẩu" value={password} onChange={e=>setPassword(e.target.value)}/><button type="button" className="absolute right-3 top-3 text-slate-400" onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff/>:<Eye/>}</button></div>{authMode==='signup'&&<input className="w-full rounded-xl border border-slate-300 px-4 py-3" type={showPassword?'text':'password'} minLength="6" required placeholder="Nhập lại mật khẩu" value={confirmPassword} onChange={e=>setConfirmPassword(e.target.value)}/>}<Btn className="w-full" type="submit">{authMode==='login'?<><LogIn className="mr-2 inline h-4 w-4"/>Đăng nhập</>:<><UserPlus className="mr-2 inline h-4 w-4"/>Đăng ký</>}</Btn></form>{authMode==='login'&&<button className="mt-4 text-sm text-blue-600" onClick={forgotPassword}>Quên mật khẩu?</button>}{notice&&<p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}<button className="mt-5 text-sm text-blue-600" onClick={()=>setAuthMode(x=>x==='login'?'signup':'login')}>{authMode==='login'?'Chưa có tài khoản? Đăng ký':'Đã có tài khoản? Đăng nhập'}</button></Card></div>}
+  useEffect(() => {
+    if (!supabase) return
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user || null)
+      setDisplayName(data.session?.user?.user_metadata?.display_name || '')
+    })
+    const { data } = supabase.auth.onAuthStateChange((event, ses) => {
+      setUser(ses?.user || null)
+      setDisplayName(ses?.user?.user_metadata?.display_name || '')
+      if (event === 'PASSWORD_RECOVERY') { setRecovery(true); setView('auth') }
+    })
+    return () => data.subscription.unsubscribe()
+  }, [])
 
-function ProfilePage({user,displayName,setDisplayName,notice,saveProfile,syncStatus,online,syncNow,logout}){return <div className="mx-auto max-w-3xl"><div className="flex items-center gap-4"><div className="grid h-16 w-16 place-items-center rounded-full bg-blue-100 text-blue-700"><User size={32}/></div><div><h1 className="text-3xl font-bold">Tài khoản của bạn</h1><p className="text-slate-500">{user.email}</p></div></div><div className="mt-6 grid gap-6 md:grid-cols-2"><Card className="p-6"><h2 className="text-xl font-bold">Hồ sơ</h2><label className="mt-4 block text-sm font-medium">Tên hiển thị</label><input className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3" value={displayName} onChange={e=>setDisplayName(e.target.value)}/><Btn className="mt-4 w-full" onClick={saveProfile}><Save className="mr-2 inline h-4 w-4"/>Lưu hồ sơ</Btn>{notice&&<p className="mt-3 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}</Card><Card className="p-6"><h2 className="text-xl font-bold">Đồng bộ dữ liệu</h2><div className="mt-4 flex items-center gap-3 rounded-xl bg-slate-50 p-4">{online?<Cloud className="text-emerald-600"/>:<CloudOff className="text-red-600"/>}<div><div className="font-semibold">{online?'Đang kết nối':'Đang ngoại tuyến'}</div><div className="text-sm text-slate-500">Trạng thái: {syncStatus}</div></div></div><Btn className="mt-4 w-full" disabled={!online} onClick={syncNow}><RefreshCw className="mr-2 inline h-4 w-4"/>Đồng bộ ngay</Btn></Card></div><Card className="mt-6 p-6"><h2 className="text-xl font-bold">Bảo mật phiên đăng nhập</h2><p className="mt-2 text-slate-500">Đăng xuất thiết bị này hoặc tất cả thiết bị đang dùng cùng tài khoản.</p><div className="mt-4 flex flex-wrap gap-3"><Btn variant="ghost" onClick={()=>logout('local')}>Đăng xuất thiết bị này</Btn><Btn variant="danger" onClick={()=>logout('global')}>Đăng xuất tất cả thiết bị</Btn></div></Card></div>}
+  useEffect(() => {
+    if (!supabase || !user || !online) return
+    setSyncing(true); setSyncStatus('syncing')
+    Promise.all([
+      supabase.from('learning_progress').select('answers,history,current_session,skill_progress,updated_at').eq('user_id', user.id).maybeSingle(),
+      supabase.from('profiles').select('display_name').eq('id', user.id).maybeSingle()
+    ]).then(([progress, profile]) => {
+      if (progress.error) { setSyncStatus('error') } else {
+        const cloud = progress.data || {}
+        setAnswers(local => ({ ...cloud.answers, ...local }))
+        setHistory(local => mergeHistory(cloud.history || [], local))
+        setSession(local => local || cloud.current_session || null)
+        setSkillProgress(local => ({ ...(cloud.skill_progress || {}), ...local }))
+        setSyncStatus('saved')
+      }
+      if (profile.data?.display_name) setDisplayName(profile.data.display_name)
+    }).finally(() => setSyncing(false))
+  }, [user?.id, online])
 
-function translateAuthError(message=''){const m=message.toLowerCase();if(m.includes('invalid login'))return 'Email hoặc mật khẩu chưa đúng.';if(m.includes('already registered'))return 'Email này đã được đăng ký.';if(m.includes('password'))return 'Mật khẩu chưa hợp lệ hoặc quá yếu.';if(m.includes('email not confirmed'))return 'Bạn cần xác nhận email trước khi đăng nhập.';if(m.includes('rate limit'))return 'Bạn thao tác quá nhanh. Hãy chờ một lúc rồi thử lại.';return message||'Đã có lỗi xảy ra.'}
-function mergeHistory(a,b){const map=new Map();[...a,...b].forEach(x=>map.set(x.id,x));return [...map.values()].sort((x,y)=>new Date(y.date)-new Date(x.date)).slice(0,100)}
-function MobileNav({go}){return <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t bg-white p-2 shadow-[0_-4px_12px_rgba(0,0,0,.06)] md:hidden"><button className="flex flex-col items-center gap-1 p-1 text-xs" onClick={()=>go('home')}><Home className="h-5 w-5"/>Trang chủ</button><button className="flex flex-col items-center gap-1 p-1 text-xs" onClick={()=>go('lessons')}><BookOpen className="h-5 w-5"/>Bài học</button><button className="flex flex-col items-center gap-1 p-1 text-xs" onClick={()=>go('progress')}><Trophy className="h-5 w-5"/>Kết quả</button></nav>}
+  useEffect(() => {
+    if (!supabase || !user || !online) return
+    const t = setTimeout(async () => {
+      setSyncing(true); setSyncStatus('syncing')
+      const { error } = await supabase.from('learning_progress').upsert({
+        user_id: user.id, answers, history, current_session: session,
+        skill_progress: skillProgress, updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' })
+      setSyncStatus(error ? 'error' : 'saved'); setSyncing(false)
+    }, 900)
+    return () => clearTimeout(t)
+  }, [answers, history, session, skillProgress, user?.id, online])
 
+  const lesson = LESSONS.find(x => x.id === lessonId)
+  const sessionQuestions = useMemo(
+    () => session?.questionIds?.map(id => QUESTIONS.find(q => q.id === id)).filter(Boolean) || [],
+    [session?.questionIds]
+  )
+  const current = sessionQuestions[session?.index || 0]
+  const currentChoice = current ? session?.responses?.[current.id] : undefined
+  const done = Object.keys(answers).length
+  const correct = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer === v).length
+
+  const go = v => { setView(v); setMenu(false); window.scrollTo(0, 0) }
+
+  const startQuiz = (lessonNumber, mode = 'practice', ids = null) => {
+    const pool = ids?.length ? ids : QUESTIONS.filter(q => q.lesson === lessonNumber).map(q => q.id)
+    setSession({ lesson: lessonNumber, mode, questionIds: pool, index: 0, responses: {}, checked: {}, startedAt: new Date().toISOString() })
+    go('quiz')
+  }
+  const continueQuiz = () => session && go('quiz')
+  const selectChoice = i => {
+    if (!current || session.checked?.[current.id] || session.completed) return
+    setSession(s => ({ ...s, responses: { ...s.responses, [current.id]: i } }))
+  }
+  const checkCurrent = () => {
+    if (currentChoice === undefined) return
+    setSession(s => ({ ...s, checked: { ...s.checked, [current.id]: true } }))
+    setAnswers(a => ({ ...a, [current.id]: currentChoice }))
+  }
+  const move = delta => setSession(s => ({ ...s, index: Math.min(s.questionIds.length - 1, Math.max(0, s.index + delta)) }))
+  const jump = index => setSession(s => ({ ...s, index }))
+  const finishQuiz = () => {
+    const responses = session.responses || {}
+    Object.entries(responses).forEach(([id, v]) => setAnswers(a => ({ ...a, [id]: v })))
+    const qs = sessionQuestions
+    const right = qs.filter(q => responses[q.id] === q.answer).length
+    const wrongIds = qs.filter(q => responses[q.id] !== q.answer).map(q => q.id)
+    const attempt = { id: Date.now(), lesson: session.lesson, mode: session.mode, score: right, total: qs.length, wrongIds, date: new Date().toISOString(), responses }
+    setHistory(h => [attempt, ...h].slice(0, 100))
+    setSession(s => ({ ...s, completed: true, result: attempt }))
+    go('result')
+  }
+  const quitQuiz = () => { if (confirm('Thoát bài? Tiến độ hiện tại vẫn được lưu.')) go('home') }
+  const clearSession = () => { setSession(null); go('home') }
+
+  const markSkill = (skillId, itemId, score = 100) => {
+    setSkillProgress(prev => {
+      const s = prev[skillId] || { done: 0, items: {}, total: 0 }
+      const items = { ...s.items, [itemId]: Math.max(s.items[itemId] || 0, score) }
+      return { ...prev, [skillId]: { ...s, items, done: Object.keys(items).length } }
+    })
+  }
+
+  const auth = async e => {
+    e.preventDefault(); setNotice('')
+    if (!supabase) { setNotice('Chưa kết nối Supabase. Hãy tạo file .env.local.'); return }
+    if (authMode === 'signup' && password !== confirmPassword) { setNotice('Hai mật khẩu chưa khớp.'); return }
+    setNotice('Đang xử lý...')
+    const r = authMode === 'login'
+      ? await supabase.auth.signInWithPassword({ email, password })
+      : await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName }, emailRedirectTo: window.location.origin } })
+    setNotice(r.error ? translateAuthError(r.error.message) : authMode === 'login' ? 'Đăng nhập thành công.' : 'Đăng ký thành công. Hãy kiểm tra email nếu hệ thống yêu cầu xác nhận.')
+    if (!r.error && authMode === 'login') go('home')
+  }
+  const logout = async (scope = 'local') => { await supabase?.auth.signOut({ scope }); setUser(null); setSyncStatus('local'); go('home') }
+  const forgotPassword = async () => {
+    if (!supabase || !email) { setNotice('Hãy nhập email trước.'); return }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin })
+    setNotice(error ? translateAuthError(error.message) : 'Đã gửi liên kết đặt lại mật khẩu. Hãy kiểm tra email.')
+  }
+  const updatePassword = async () => {
+    if (newPassword.length < 6) { setNotice('Mật khẩu mới cần ít nhất 6 ký tự.'); return }
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setNotice(error ? translateAuthError(error.message) : 'Đã đổi mật khẩu thành công.')
+    if (!error) { setRecovery(false); setNewPassword('') }
+  }
+  const saveProfile = async () => {
+    if (!supabase || !user) return
+    setSyncStatus('syncing')
+    const [a, b] = await Promise.all([
+      supabase.auth.updateUser({ data: { display_name: displayName } }),
+      supabase.from('profiles').upsert({ id: user.id, display_name: displayName, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    ])
+    setNotice(a.error || b.error ? 'Không thể lưu hồ sơ lúc này.' : 'Đã lưu hồ sơ.')
+    setSyncStatus(a.error || b.error ? 'error' : 'saved')
+  }
+  const syncNow = async () => {
+    if (!supabase || !user || !online) return
+    setSyncing(true); setSyncStatus('syncing')
+    const { error } = await supabase.from('learning_progress').upsert({
+      user_id: user.id, answers, history, current_session: session,
+      skill_progress: skillProgress, updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' })
+    setSyncStatus(error ? 'error' : 'saved'); setSyncing(false)
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
+      <Header user={user} displayName={displayName} syncing={syncing} syncStatus={syncStatus}
+        online={online} logout={logout} go={go} menu={menu} setMenu={setMenu} />
+
+      <main className="mx-auto max-w-7xl px-4 py-8">
+        {view === 'home' && (
+          <HomePage done={done} correct={correct} session={session} continueQuiz={continueQuiz}
+            startQuiz={startQuiz} openLesson={id => { setLessonId(id); go('lesson') }} go={go} history={history} />
+        )}
+        {view === 'lessons' && (
+          <LessonsHub answers={answers} history={history} skillProgress={skillProgress}
+            openLesson={id => { setLessonId(id); go('lesson') }}
+            practice={id => startQuiz(id, 'practice')}
+            exam={id => startQuiz(id, 'exam')}
+            go={go} />
+        )}
+        {view === 'lesson' && lesson && (
+          <LessonPage lesson={lesson} go={go} practice={() => startQuiz(lesson.id, 'practice')} exam={() => startQuiz(lesson.id, 'exam')} />
+        )}
+        {view === 'quiz' && session && current && (
+          <QuizPage session={session} questions={sessionQuestions} current={current} choice={currentChoice}
+            selectChoice={selectChoice} checkCurrent={checkCurrent} move={move} jump={jump}
+            finish={finishQuiz} quit={quitQuiz} />
+        )}
+        {view === 'result' && session?.result && (
+          <ResultPage attempt={session.result} questions={sessionQuestions} startQuiz={startQuiz} clear={clearSession} go={go} />
+        )}
+        {view === 'progress' && <ProgressPage answers={answers} history={history} startQuiz={startQuiz} go={go} />}
+        {view === 'auth' && (
+          <AuthPage authMode={authMode} setAuthMode={setAuthMode} email={email} setEmail={setEmail}
+            password={password} setPassword={setPassword}
+            confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+            displayName={displayName} setDisplayName={setDisplayName}
+            notice={notice} auth={auth} forgotPassword={forgotPassword}
+            showPassword={showPassword} setShowPassword={setShowPassword}
+            recovery={recovery} newPassword={newPassword} setNewPassword={setNewPassword}
+            updatePassword={updatePassword} />
+        )}
+        {view === 'profile' && user && (
+          <ProfilePage user={user} displayName={displayName} setDisplayName={setDisplayName}
+            notice={notice} saveProfile={saveProfile} syncStatus={syncStatus}
+            online={online} syncNow={syncNow} logout={logout} />
+        )}
+
+        {view === 'listening' && <Listening onBack={() => go('lessons')} onComplete={(id, s) => markSkill('listening', id, s)} />}
+        {view === 'speaking'  && <Speaking  onBack={() => go('lessons')} onComplete={(id, s) => markSkill('speaking',  id, s)} />}
+        {view === 'reading'   && <Reading   onBack={() => go('lessons')} onComplete={(id, s) => markSkill('reading',   id, s)} />}
+        {view === 'writing'   && <Writing   onBack={() => go('lessons')} onComplete={(id, s) => markSkill('writing',   id, s)} />}
+      </main>
+
+      <MobileNav go={go} />
+    </div>
+  )
+}
+
+// ============================================================
+// Header / Nav
+// ============================================================
+function Header({ user, displayName, syncing, syncStatus, online, logout, go, menu, setMenu }) {
+  const syncLabel = !online ? 'Ngoại tuyến'
+    : syncing || syncStatus === 'syncing' ? 'Đang đồng bộ'
+    : syncStatus === 'error' ? 'Lỗi đồng bộ'
+    : syncStatus === 'saved' ? 'Đã lưu'
+    : 'Lưu cục bộ'
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <button onClick={() => go('home')} className="flex items-center gap-2 font-black tracking-tight">
+          <span className="rounded-xl bg-blue-600 p-2 text-white shadow-sm"><GraduationCap size={18} /></span>
+          <span className="text-lg">Nam English</span>
+        </button>
+
+        <nav className="hidden gap-1 md:flex">
+          <NavButton onClick={() => go('home')} icon={<Home />}>Trang chủ</NavButton>
+          <NavButton onClick={() => go('lessons')} icon={<BookOpen />}>Bài học</NavButton>
+          <NavButton onClick={() => go('progress')} icon={<BarChart3 />}>Kết quả</NavButton>
+          {user && <NavButton onClick={() => go('profile')} icon={<User />}>Tài khoản</NavButton>}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          <span className={`hidden items-center gap-1 text-xs sm:flex ${syncStatus === 'error' ? 'text-red-600' : 'text-slate-400'}`}>
+            {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}{syncLabel}
+          </span>
+          {user
+            ? <button className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium transition hover:bg-slate-200 md:block" onClick={() => go('profile')}>
+                {displayName || user.email}
+              </button>
+            : <Btn onClick={() => go('auth')}><LogIn className="mr-2 inline h-4 w-4" />Đăng nhập</Btn>}
+          <button className="rounded-lg p-2 md:hidden" onClick={() => setMenu(!menu)} aria-label="Mở menu"><Menu /></button>
+        </div>
+      </div>
+
+      {menu && (
+        <div className="grid border-t border-slate-200 p-3 md:hidden">
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('home')}>Trang chủ</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('lessons')}>Bài học</button>
+          <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('progress')}>Kết quả</button>
+          {user
+            ? <>
+                <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('profile')}>Tài khoản</button>
+                <button className="rounded-lg p-3 text-left text-red-600 hover:bg-red-50" onClick={() => logout('local')}>Đăng xuất</button>
+              </>
+            : <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('auth')}>Đăng nhập</button>}
+        </div>
+      )}
+    </header>
+  )
+}
+
+function NavButton({ icon, children, ...p }) {
+  return (
+    <button className="flex items-center gap-2 rounded-xl px-4 py-2 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900" {...p}>
+      <span className="[&>svg]:h-4 [&>svg]:w-4">{icon}</span>{children}
+    </button>
+  )
+}
+
+// ============================================================
+// Home
+// ============================================================
+function HomePage({ done, correct, session, continueQuiz, startQuiz, openLesson, go, history }) {
+  const last = history[0]
+  return (
+    <div className="space-y-8">
+      {/* HERO — button đã fix, không còn bị che trắng */}
+      <section className="grid gap-8 rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl md:grid-cols-2 md:p-12">
+        <div>
+          <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">13 bài • 300 câu • 4 kỹ năng</span>
+          <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">
+            Học rõ.<br />Luyện thật.<br />Nhớ lâu.
+          </h1>
+          <p className="mt-4 text-lg text-blue-100">
+            Lý thuyết đầy đủ, bài tập theo mức độ, và phòng luyện 4 kỹ năng Nghe – Nói – Đọc – Viết.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Btn variant="white" onClick={() => go('lessons')}>
+              <BookOpen className="mr-2 inline h-4 w-4" />Chọn bài học
+            </Btn>
+            <Btn variant="accent" onClick={() => go('lessons')}>
+              <Sparkles className="mr-2 inline h-4 w-4" />4 kỹ năng
+            </Btn>
+            <Btn variant="glass" onClick={() => startQuiz(14, 'exam')}>
+              Kiểm tra tổng hợp
+            </Btn>
+          </div>
+        </div>
+
+        <Card className="border-0 bg-white/10 p-6 text-white backdrop-blur">
+          <div className="flex justify-between">
+            <span className="text-white/80">Tiến độ toàn bộ</span>
+            <strong className="tabular-nums">{done}/300</strong>
+          </div>
+          <div className="mt-3">
+            <div className="h-2.5 overflow-hidden rounded-full bg-white/20">
+              <div className="h-full rounded-full bg-white/90 transition-all" style={{ width: `${Math.min(100, done / 3)}%` }} />
+            </div>
+          </div>
+          <div className="mt-6 grid grid-cols-2 gap-3 text-center">
+            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+              <div className="text-3xl font-black tabular-nums">{correct}</div>
+              <div className="text-sm text-white/80">Câu đúng</div>
+            </div>
+            <div className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+              <div className="text-3xl font-black tabular-nums">{done ? Math.round(correct / done * 100) : 0}%</div>
+              <div className="text-sm text-white/80">Chính xác</div>
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {session && !session.completed && (
+        <Card className="border-blue-200 bg-blue-50 p-5">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <div className="font-bold text-blue-900">Tiếp tục bài đang làm</div>
+              <p className="text-sm text-blue-700">
+                {lessonName(session.lesson)} • Câu {session.index + 1}/{session.questionIds.length} •{' '}
+                {Object.keys(session.responses || {}).length} câu đã trả lời
+              </p>
+            </div>
+            <Btn onClick={continueQuiz}>Tiếp tục<ArrowRight className="ml-2 inline h-4 w-4" /></Btn>
+          </div>
+        </Card>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Stat icon={<ListChecks />} title="Câu đã làm" value={`${done}/300`} />
+        <Stat icon={<CheckCircle2 />} title="Đáp án đúng" value={correct} />
+        <Stat icon={<History />} title="Lượt gần nhất"
+          value={last ? `${last.score}/${last.total}` : 'Chưa có'}
+          note={last && lessonName(last.lesson)} />
+      </div>
+
+      <LessonGrid compact open={openLesson} practice={id => startQuiz(id, 'practice')} exam={id => startQuiz(id, 'exam')} history={history} />
+    </div>
+  )
+}
+
+// ============================================================
+// Lessons Hub — gộp 4 kỹ năng + 13 bài ngữ pháp
+// ============================================================
+function LessonsHub({ answers, history, skillProgress, openLesson, practice, exam, go }) {
+  return (
+    <div className="space-y-10">
+      <section className="rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-violet-800 p-8 text-white shadow-xl md:p-12">
+        <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">Lộ trình đầy đủ</span>
+        <h1 className="mt-4 text-4xl font-black leading-tight md:text-5xl">Bài học & Luyện kỹ năng</h1>
+        <p className="mt-3 max-w-2xl text-blue-100">
+          Bắt đầu từ lý thuyết ngữ pháp, sau đó rèn 4 kỹ năng Nghe – Nói – Đọc – Viết
+          với phản hồi tức thì ngay trong trình duyệt.
+        </p>
+      </section>
+
+      {/* 4 kỹ năng */}
+      <SkillsSection go={go} progress={skillProgress} />
+
+      {/* 13 bài ngữ pháp */}
+      <section>
+        <div className="mb-5">
+          <h2 className="text-2xl font-black md:text-3xl">Ngữ pháp – 13 bài</h2>
+          <p className="mt-1 text-slate-500">
+            Từ cấu trúc câu cơ bản đến câu điều kiện, bị động, mệnh đề quan hệ.
+          </p>
+        </div>
+        <LessonGrid open={openLesson} practice={practice} exam={exam} history={history} answers={answers} />
+      </section>
+    </div>
+  )
+}
+
+// ============================================================
+// Lesson grid + Lesson page
+// ============================================================
+function LessonGrid({ open, practice, exam, history = [], answers = {}, compact = false }) {
+  return (
+    <section className="mt-2">
+      {compact && (
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl font-black">13 bài học</h2>
+            <p className="text-slate-500">Chọn chế độ học có giải thích hoặc kiểm tra không hiện đáp án ngay.</p>
+          </div>
+        </div>
+      )}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {LESSONS.map(l => {
+          const qs = QUESTIONS.filter(q => q.lesson === l.id)
+          const n = qs.filter(q => answers[q.id] !== undefined).length
+          const best = history
+            .filter(h => h.lesson === l.id)
+            .sort((a, b) => b.score / b.total - a.score / a.total)[0]
+          return (
+            <Card key={l.id} className="p-5 transition hover:shadow-md">
+              <div className="flex justify-between">
+                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-100 font-black text-blue-700 tabular-nums">{l.id}</div>
+                {best && (
+                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 tabular-nums">
+                    Cao nhất {best.score}/{best.total}
+                  </span>
+                )}
+              </div>
+              <h3 className="mt-4 text-lg font-bold">{l.title}</h3>
+              <p className="mt-1 min-h-10 text-sm text-slate-500">{l.short}</p>
+              {!compact && (
+                <div className="mt-3">
+                  <div className="mb-1 flex justify-between text-xs text-slate-400 tabular-nums">
+                    <span>Đã làm</span><span>{n}/{qs.length}</span>
+                  </div>
+                  <Progress value={(n / qs.length) * 100} />
+                </div>
+              )}
+              <div className="mt-5 grid grid-cols-3 gap-2">
+                <Btn variant="ghost" className="px-2" onClick={() => open(l.id)}>Học</Btn>
+                <Btn className="px-2" onClick={() => practice(l.id)}>Luyện</Btn>
+                <Btn variant="ghost" className="px-2" onClick={() => exam(l.id)}>Kiểm tra</Btn>
+              </div>
+            </Card>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function LessonPage({ lesson, go, practice, exam }) {
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="rounded-3xl bg-blue-700 p-7 text-white shadow-lg">
+        <div className="text-white/80">Bài {lesson.id}/13</div>
+        <h1 className="mt-2 text-3xl font-black">{lesson.title}</h1>
+        <p className="mt-2 text-blue-100">{lesson.short}</p>
+      </div>
+      <div className="mt-6 space-y-4">
+        {lesson.sections.map((s, i) => (
+          <Card key={i} className="p-6">
+            <div className="flex items-start gap-4">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-100 font-bold text-blue-700 tabular-nums">{i + 1}</span>
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold">{s.heading}</h2>
+                <p className="mt-2 leading-7 text-slate-700">{s.text}</p>
+                {s.formula && (
+                  <div className="mt-4 rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4 font-mono font-bold text-amber-950">{s.formula}</div>
+                )}
+                {s.example && (
+                  <div className="mt-3 rounded-xl bg-blue-50 p-4 text-blue-900"><strong>Ví dụ: </strong>{s.example}</div>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+      <div className="mt-6 flex flex-wrap justify-between gap-3">
+        <Btn variant="ghost" onClick={() => go('lessons')}>Danh sách bài</Btn>
+        <div className="flex gap-2">
+          <Btn variant="ghost" onClick={exam}>Kiểm tra</Btn>
+          <Btn onClick={practice}>Luyện tập có giải thích</Btn>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Quiz
+// ============================================================
+function QuizPage({ session, questions, current, choice, selectChoice, checkCurrent, move, jump, finish, quit }) {
+  const isPractice = session.mode === 'practice'
+  const answered = Object.keys(session.responses || {}).length
+  const checked = session.checked?.[current.id]
+
+  return (
+    <div className="mx-auto max-w-5xl">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-sm text-slate-500">{lessonName(session.lesson)} • {isPractice ? 'Luyện tập' : 'Kiểm tra'}</div>
+          <h1 className="text-2xl font-black tabular-nums">Câu {session.index + 1}/{questions.length}</h1>
+        </div>
+        <Btn variant="ghost" onClick={quit}><X className="mr-2 inline h-4 w-4" />Thoát</Btn>
+      </div>
+      <Progress value={((session.index + 1) / questions.length) * 100} />
+      <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_270px]">
+        <Card className="p-6 md:p-7">
+          <div className="mb-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{current.type}</span>
+            <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{current.level}</span>
+          </div>
+          <h2 className="text-xl font-semibold leading-8">{current.q}</h2>
+          <div className="mt-6 space-y-3">
+            {current.choices.map((x, i) => {
+              const right = i === current.answer
+              const chosen = i === choice
+              return (
+                <button disabled={isPractice && checked} key={i} onClick={() => selectChoice(i)}
+                  className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${
+                    isPractice && checked && right ? 'border-emerald-500 bg-emerald-50'
+                    : isPractice && checked && chosen && !right ? 'border-red-500 bg-red-50'
+                    : chosen ? 'border-blue-600 bg-blue-50'
+                    : 'border-slate-200 hover:border-blue-300'
+                  }`}>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border font-semibold">{String.fromCharCode(65 + i)}</span>
+                  <span>{x}</span>
+                  {isPractice && checked && right && <CheckCircle2 className="ml-auto text-emerald-600" />}
+                  {isPractice && checked && chosen && !right && <XCircle className="ml-auto text-red-600" />}
+                </button>
+              )
+            })}
+          </div>
+          {isPractice && checked && (
+            <div className="mt-5 rounded-2xl bg-amber-50 p-4 text-amber-950">
+              <strong>{choice === current.answer ? 'Chính xác.' : 'Chưa đúng.'}</strong> {current.explain}
+            </div>
+          )}
+          <div className="mt-7 flex flex-wrap justify-between gap-2">
+            <Btn variant="ghost" disabled={session.index === 0} onClick={() => move(-1)}>
+              <ArrowLeft className="mr-2 inline h-4 w-4" />Câu trước
+            </Btn>
+            <div className="flex gap-2">
+              {isPractice && !checked && <Btn disabled={choice === undefined} onClick={checkCurrent}>Kiểm tra</Btn>}
+              {session.index < questions.length - 1
+                ? <Btn disabled={isPractice && !checked} onClick={() => move(1)}>Câu sau<ArrowRight className="ml-2 inline h-4 w-4" /></Btn>
+                : <Btn disabled={answered === 0} onClick={finish}>Nộp bài</Btn>}
+            </div>
+          </div>
+        </Card>
+        <QuestionNavigator questions={questions} session={session} jump={jump} finish={finish} />
+      </div>
+    </div>
+  )
+}
+
+function QuestionNavigator({ questions, session, jump, finish }) {
+  return (
+    <Card className="h-fit p-4 lg:sticky lg:top-24">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold">Danh sách câu</h3>
+        <span className="text-sm text-slate-500 tabular-nums">{Object.keys(session.responses || {}).length}/{questions.length}</span>
+      </div>
+      <div className="mt-4 grid grid-cols-5 gap-2">
+        {questions.map((q, i) => {
+          const response = session.responses?.[q.id]
+          const checked = session.checked?.[q.id]
+          const right = checked && response === q.answer
+          const wrong = checked && response !== q.answer
+          return (
+            <button title={`Câu ${i + 1}`} onClick={() => jump(i)} key={q.id}
+              className={`h-9 rounded-lg text-sm font-bold tabular-nums transition ${
+                i === session.index ? 'ring-2 ring-blue-600 ring-offset-2'
+                : right ? 'bg-emerald-500 text-white'
+                : wrong ? 'bg-red-500 text-white'
+                : response !== undefined ? 'bg-blue-600 text-white'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}>
+              {i + 1}
+            </button>
+          )
+        })}
+      </div>
+      <div className="mt-4 space-y-1 text-xs text-slate-500">
+        <div><span className="mr-2 inline-block h-3 w-3 rounded bg-blue-600" />Đã trả lời</div>
+        {session.mode === 'practice' && <>
+          <div><span className="mr-2 inline-block h-3 w-3 rounded bg-emerald-500" />Đúng</div>
+          <div><span className="mr-2 inline-block h-3 w-3 rounded bg-red-500" />Sai</div>
+        </>}
+      </div>
+      {session.mode === 'exam' && (
+        <Btn className="mt-5 w-full" disabled={!Object.keys(session.responses || {}).length} onClick={finish}>Nộp bài</Btn>
+      )}
+    </Card>
+  )
+}
+
+// ============================================================
+// Result
+// ============================================================
+function ResultPage({ attempt, questions, startQuiz, clear, go }) {
+  const wrong = questions.filter(q => attempt.wrongIds.includes(q.id))
+  const percent = Math.round((attempt.score / attempt.total) * 100)
+  return (
+    <div className="mx-auto max-w-4xl">
+      <div className="text-center">
+        <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-amber-100 text-amber-600"><Trophy size={48} /></div>
+        <h1 className="mt-5 text-4xl font-black">
+          {percent >= 80 ? 'Hoàn thành tốt!' : percent >= 50 ? 'Bạn đã hoàn thành' : 'Hãy ôn lại thêm'}
+        </h1>
+        <p className="mt-2 text-slate-500">{lessonName(attempt.lesson)}</p>
+      </div>
+      <div className="mt-7 grid gap-4 md:grid-cols-3">
+        <Stat icon={<Target />} title="Điểm" value={`${attempt.score}/${attempt.total}`} />
+        <Stat icon={<BarChart3 />} title="Chính xác" value={`${percent}%`} />
+        <Stat icon={<XCircle />} title="Câu cần ôn" value={wrong.length} />
+      </div>
+      {wrong.length > 0 && (
+        <Card className="mt-6 p-6">
+          <h2 className="text-xl font-bold">Các câu trả lời sai hoặc bỏ trống</h2>
+          <div className="mt-4 space-y-4">
+            {wrong.map((q, i) => (
+              <div key={q.id} className="rounded-xl border border-red-100 bg-red-50 p-4">
+                <div className="font-semibold">{i + 1}. {q.q}</div>
+                <div className="mt-2 text-sm text-red-700">Đáp án đúng: {q.choices[q.answer]}</div>
+                <div className="mt-1 text-sm text-slate-600">{q.explain}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        {wrong.length > 0 && (
+          <Btn variant="danger" onClick={() => startQuiz(attempt.lesson, 'practice', wrong.map(q => q.id))}>
+            <RotateCcw className="mr-2 inline h-4 w-4" />Làm lại câu sai
+          </Btn>
+        )}
+        <Btn variant="ghost" onClick={() => startQuiz(attempt.lesson, attempt.mode)}>Làm lại toàn bài</Btn>
+        <Btn onClick={() => { clear(); go('progress') }}>Xem tiến độ</Btn>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Progress
+// ============================================================
+function ProgressPage({ answers, history, startQuiz }) {
+  const done = Object.keys(answers).length
+  const correct = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer === v).length
+  const wrongIds = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer !== v).map(([id]) => +id)
+  return (
+    <div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-black">Kết quả học tập</h1>
+          <p className="mt-2 text-slate-500">Theo dõi điểm cao nhất, lần gần nhất và những câu cần ôn.</p>
+        </div>
+        {wrongIds.length > 0 && (
+          <Btn variant="danger" onClick={() => startQuiz(0, 'practice', wrongIds)}>
+            <RotateCcw className="mr-2 inline h-4 w-4" />Luyện {wrongIds.length} câu sai
+          </Btn>
+        )}
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <Stat icon={<ListChecks />} title="Đã làm" value={`${done}/300`} />
+        <Stat icon={<CheckCircle2 />} title="Câu đúng" value={correct} />
+        <Stat icon={<Target />} title="Độ chính xác" value={`${done ? Math.round(correct / done * 100) : 0}%`} />
+      </div>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+        <Card className="p-6">
+          <h2 className="text-xl font-bold">Theo từng bài</h2>
+          <div className="mt-5 space-y-5">
+            {LESSONS.map(l => {
+              const qs = QUESTIONS.filter(q => q.lesson === l.id)
+              const n = qs.filter(q => answers[q.id] !== undefined).length
+              const attempts = history.filter(h => h.lesson === l.id)
+              const last = attempts[0]
+              const best = [...attempts].sort((a, b) => b.score / b.total - a.score / a.total)[0]
+              return (
+                <div key={l.id}>
+                  <div className="mb-2 flex flex-wrap justify-between gap-2 text-sm">
+                    <span className="font-medium">Bài {l.id}: {l.title}</span>
+                    <span className="text-slate-500 tabular-nums">
+                      Đã làm {n}/{qs.length}
+                      {best ? ` • Cao nhất ${best.score}/${best.total}` : ''}
+                      {last ? ` • Gần nhất ${last.score}/${last.total}` : ''}
+                    </span>
+                  </div>
+                  <Progress value={(n / qs.length) * 100} />
+                </div>
+              )
+            })}
+          </div>
+        </Card>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold">Lịch sử gần đây</h2>
+          <div className="mt-4 space-y-3">
+            {history.length ? history.slice(0, 10).map(h => (
+              <div key={h.id} className="rounded-xl bg-slate-50 p-3">
+                <div className="flex justify-between">
+                  <strong>{lessonName(h.lesson)}</strong>
+                  <span className="font-bold text-blue-700 tabular-nums">{h.score}/{h.total}</span>
+                </div>
+                <div className="mt-1 text-xs text-slate-400">
+                  {new Date(h.date).toLocaleString('vi-VN')} • {h.mode === 'practice' ? 'Luyện tập' : 'Kiểm tra'}
+                </div>
+              </div>
+            )) : <p className="text-slate-500">Chưa có lượt làm nào.</p>}
+          </div>
+        </Card>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Auth
+// ============================================================
+function AuthPage({
+  authMode, setAuthMode, email, setEmail, password, setPassword,
+  confirmPassword, setConfirmPassword, displayName, setDisplayName,
+  notice, auth, forgotPassword, showPassword, setShowPassword,
+  recovery, newPassword, setNewPassword, updatePassword
+}) {
+  if (recovery) return (
+    <div className="mx-auto max-w-md py-10">
+      <Card className="p-6">
+        <div className="flex items-center gap-3"><KeyRound className="text-blue-600" /><h1 className="text-2xl font-black">Đặt mật khẩu mới</h1></div>
+        <div className="relative mt-5">
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
+            type={showPassword ? 'text' : 'password'} minLength="6" placeholder="Mật khẩu mới"
+            value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          <button className="absolute right-3 top-3 text-slate-400" onClick={() => setShowPassword(!showPassword)}>
+            {showPassword ? <EyeOff /> : <Eye />}
+          </button>
+        </div>
+        <Btn className="mt-4 w-full" onClick={updatePassword}>Cập nhật mật khẩu</Btn>
+        {notice && <p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}
+      </Card>
+    </div>
+  )
+
+  return (
+    <div className="mx-auto max-w-md py-10">
+      <Card className="p-6">
+        <div className="flex items-center gap-3">
+          <ShieldCheck className="text-blue-600" />
+          <h1 className="text-2xl font-black">{authMode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</h1>
+        </div>
+        <form onSubmit={auth} className="mt-5 space-y-4">
+          {authMode === 'signup' && (
+            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+              required placeholder="Tên hiển thị" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          )}
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+            type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+          <div className="relative">
+            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
+              type={showPassword ? 'text' : 'password'} minLength="6" required placeholder="Mật khẩu"
+              value={password} onChange={e => setPassword(e.target.value)} />
+            <button type="button" className="absolute right-3 top-3 text-slate-400" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <EyeOff /> : <Eye />}
+            </button>
+          </div>
+          {authMode === 'signup' && (
+            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+              type={showPassword ? 'text' : 'password'} minLength="6" required placeholder="Nhập lại mật khẩu"
+              value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+          )}
+          <Btn className="w-full" type="submit">
+            {authMode === 'login'
+              ? <><LogIn className="mr-2 inline h-4 w-4" />Đăng nhập</>
+              : <><UserPlus className="mr-2 inline h-4 w-4" />Đăng ký</>}
+          </Btn>
+        </form>
+        {authMode === 'login' && (
+          <button className="mt-4 text-sm font-medium text-blue-600 hover:underline" onClick={forgotPassword}>Quên mật khẩu?</button>
+        )}
+        {notice && <p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}
+        <button className="mt-5 text-sm font-medium text-blue-600 hover:underline"
+          onClick={() => setAuthMode(x => x === 'login' ? 'signup' : 'login')}>
+          {authMode === 'login' ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
+        </button>
+      </Card>
+    </div>
+  )
+}
+
+// ============================================================
+// Profile
+// ============================================================
+function ProfilePage({ user, displayName, setDisplayName, notice, saveProfile, syncStatus, online, syncNow, logout }) {
+  return (
+    <div className="mx-auto max-w-3xl">
+      <div className="flex items-center gap-4">
+        <div className="grid h-16 w-16 place-items-center rounded-full bg-blue-100 text-blue-700"><User size={32} /></div>
+        <div>
+          <h1 className="text-3xl font-black">Tài khoản của bạn</h1>
+          <p className="text-slate-500">{user.email}</p>
+        </div>
+      </div>
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <Card className="p-6">
+          <h2 className="text-xl font-bold">Hồ sơ</h2>
+          <label className="mt-4 block text-sm font-medium">Tên hiển thị</label>
+          <input className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+            value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          <Btn className="mt-4 w-full" onClick={saveProfile}>
+            <Save className="mr-2 inline h-4 w-4" />Lưu hồ sơ
+          </Btn>
+          {notice && <p className="mt-3 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}
+        </Card>
+        <Card className="p-6">
+          <h2 className="text-xl font-bold">Đồng bộ dữ liệu</h2>
+          <div className="mt-4 flex items-center gap-3 rounded-xl bg-slate-50 p-4">
+            {online ? <Cloud className="text-emerald-600" /> : <CloudOff className="text-red-600" />}
+            <div>
+              <div className="font-semibold">{online ? 'Đang kết nối' : 'Đang ngoại tuyến'}</div>
+              <div className="text-sm text-slate-500">Trạng thái: {syncStatus}</div>
+            </div>
+          </div>
+          <Btn className="mt-4 w-full" disabled={!online} onClick={syncNow}>
+            <RefreshCw className="mr-2 inline h-4 w-4" />Đồng bộ ngay
+          </Btn>
+        </Card>
+      </div>
+      <Card className="mt-6 p-6">
+        <h2 className="text-xl font-bold">Bảo mật phiên đăng nhập</h2>
+        <p className="mt-2 text-slate-500">Đăng xuất thiết bị này hoặc tất cả thiết bị đang dùng cùng tài khoản.</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Btn variant="ghost" onClick={() => logout('local')}>Đăng xuất thiết bị này</Btn>
+          <Btn variant="danger" onClick={() => logout('global')}>Đăng xuất tất cả thiết bị</Btn>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// ============================================================
+// Helpers
+// ============================================================
+function translateAuthError(message = '') {
+  const m = message.toLowerCase()
+  if (m.includes('invalid login')) return 'Email hoặc mật khẩu chưa đúng.'
+  if (m.includes('already registered')) return 'Email này đã được đăng ký.'
+  if (m.includes('password')) return 'Mật khẩu chưa hợp lệ hoặc quá yếu.'
+  if (m.includes('email not confirmed')) return 'Bạn cần xác nhận email trước khi đăng nhập.'
+  if (m.includes('rate limit')) return 'Bạn thao tác quá nhanh. Hãy chờ một lúc rồi thử lại.'
+  return message || 'Đã có lỗi xảy ra.'
+}
+
+function mergeHistory(a, b) {
+  const map = new Map()
+  ;[...a, ...b].forEach(x => map.set(x.id, x))
+  return [...map.values()].sort((x, y) => new Date(y.date) - new Date(x.date)).slice(0, 100)
+}
+
+function MobileNav({ go }) {
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-3 border-t border-slate-200 bg-white p-2 shadow-[0_-4px_12px_rgba(0,0,0,.06)] md:hidden">
+      <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('home')}>
+        <Home className="h-5 w-5" />Trang chủ
+      </button>
+      <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('lessons')}>
+        <BookOpen className="h-5 w-5" />Bài học
+      </button>
+      <button className="flex flex-col items-center gap-1 p-1 text-xs font-medium" onClick={() => go('progress')}>
+        <Trophy className="h-5 w-5" />Kết quả
+      </button>
+    </nav>
+  )
+}
 
 ========================================
 FILE: src/index.css
@@ -251,12 +1045,35 @@ FILE: src/index.css
 
 @import "tailwindcss";
 
-:root { font-family: Inter, Arial, Helvetica, sans-serif; color: #0f172a; background: #f8fafc; }
+@theme {
+  --font-sans: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
-button, input { font: inherit; }
+button, input, textarea, select { font: inherit; }
 
+/* Heading nhìn gọn và hiện đại hơn */
+h1, h2, h3, h4 { letter-spacing: -0.015em; }
+
+/* Số liệu trong Stat / điểm số thẳng cột */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Scroll mượt cho overlay mobile menu */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
 
 ========================================
 FILE: src/main.jsx
@@ -5311,6 +6128,1108 @@ export const QUESTIONS = [
 
 
 ========================================
+FILE: src/skills/Listening.jsx
+========================================
+
+import { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle2, XCircle, Gauge } from 'lucide-react'
+import { LISTENING } from './data'
+import { stopSpeaking, speechSupported, wordOverlap } from './utils'
+
+const Btn = ({ children, variant = 'primary', className = '', ...p }) => (
+  <button
+    className={`rounded-xl px-4 py-2.5 font-semibold transition disabled:opacity-45 ${
+      variant === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700'
+      : variant === 'danger' ? 'bg-red-600 text-white hover:bg-red-700'
+      : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+    } ${className}`}
+    {...p}
+  >{children}</button>
+)
+
+export default function Listening({ onComplete, onBack }) {
+  const [mode, setMode] = useState('comprehension')
+  const [idx, setIdx] = useState(0)
+  const [rate, setRate] = useState(0.9)
+  const [playing, setPlaying] = useState(false)
+  const [resp, setResp] = useState({})
+  const [checked, setChecked] = useState(false)
+  const [dictation, setDictation] = useState('')
+  const [dictResult, setDictResult] = useState(null)
+  const item = LISTENING[idx]
+  const synthOK = useMemo(() => speechSupported(), [])
+
+  useEffect(() => () => stopSpeaking(), [])
+
+  const play = () => {
+    if (!synthOK) return
+    stopSpeaking()
+    const u = new SpeechSynthesisUtterance(item.script)
+    u.lang = item.accent
+    u.rate = rate
+    const voices = window.speechSynthesis.getVoices()
+    const v = voices.find(x => x.lang === item.accent) || voices.find(x => x.lang.startsWith('en'))
+    if (v) u.voice = v
+    u.onend = () => setPlaying(false)
+    u.onerror = () => setPlaying(false)
+    setPlaying(true)
+    window.speechSynthesis.speak(u)
+  }
+
+  const stop = () => { stopSpeaking(); setPlaying(false) }
+
+  const reset = () => {
+    setResp({}); setChecked(false); setDictation(''); setDictResult(null)
+  }
+  const next = () => { reset(); setIdx(i => Math.min(LISTENING.length - 1, i + 1)) }
+  const prev = () => { reset(); setIdx(i => Math.max(0, i - 1)) }
+
+  const submit = () => {
+    if (mode === 'comprehension') setChecked(true)
+    else {
+      const score = Math.round(wordOverlap(dictation, item.dictation) * 100)
+      setDictResult({ score, correct: item.dictation })
+      onComplete?.(`${item.id}-dictation`, score)
+    }
+  }
+
+  const score = mode === 'comprehension'
+    ? item.questions.reduce((s, q, i) => s + (resp[i] === q.answer ? 1 : 0), 0)
+    : null
+
+  const finish = () => {
+    if (mode === 'comprehension') {
+      const pct = Math.round(score / item.questions.length * 100)
+      onComplete?.(item.id, pct)
+    }
+    if (idx < LISTENING.length - 1) next()
+    else onBack()
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Quay lại
+        </button>
+        <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+          <button onClick={() => { setMode('comprehension'); reset() }}
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'comprehension' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}>
+            Nghe – trả lời
+          </button>
+          <button onClick={() => { setMode('dictation'); reset() }}
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'dictation' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}>
+            Chép chính tả
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="text-sm text-slate-500">Bài {idx + 1}/{LISTENING.length} · {item.level}</div>
+            <h1 className="text-2xl font-bold">{item.title}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-slate-400" />
+            <input type="range" min="0.6" max="1.2" step="0.05" value={rate}
+              onChange={e => setRate(parseFloat(e.target.value))} className="w-28" />
+            <span className="text-sm text-slate-500">{rate.toFixed(2)}x</span>
+          </div>
+        </div>
+
+        {!synthOK && (
+          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            Trình duyệt không hỗ trợ Text-to-Speech. Hãy dùng Chrome/Edge/Safari bản mới.
+          </p>
+        )}
+
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Btn onClick={play} disabled={!synthOK || playing}>
+            <Play className="mr-2 inline h-4 w-4" />{playing ? 'Đang phát...' : 'Phát'}
+          </Btn>
+          <Btn variant="ghost" onClick={stop} disabled={!playing}>
+            <Pause className="mr-2 inline h-4 w-4" />Dừng
+          </Btn>
+          <Btn variant="ghost" onClick={() => { stop(); play() }} disabled={!synthOK}>
+            <RotateCcw className="mr-2 inline h-4 w-4" />Nghe lại
+          </Btn>
+        </div>
+      </div>
+
+      {mode === 'comprehension' && (
+        <div className="space-y-4">
+          {item.questions.map((q, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="font-semibold">{i + 1}. {q.q}</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {q.choices.map((c, j) => {
+                  const chosen = resp[i] === j
+                  const right = checked && j === q.answer
+                  const wrong = checked && chosen && j !== q.answer
+                  return (
+                    <button key={j} disabled={checked}
+                      onClick={() => setResp(r => ({ ...r, [i]: j }))}
+                      className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition ${
+                        right ? 'border-emerald-500 bg-emerald-50'
+                        : wrong ? 'border-red-500 bg-red-50'
+                        : chosen ? 'border-blue-600 bg-blue-50'
+                        : 'border-slate-200 hover:border-blue-300'
+                      }`}>
+                      <span className="grid h-7 w-7 place-items-center rounded-full border text-sm font-bold">
+                        {String.fromCharCode(65 + j)}
+                      </span>
+                      <span>{c}</span>
+                      {right && <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />}
+                      {wrong && <XCircle className="ml-auto h-5 w-5 text-red-600" />}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          <div className="flex flex-wrap justify-between gap-2">
+            <Btn variant="ghost" onClick={prev} disabled={idx === 0}>
+              <ArrowLeft className="mr-2 inline h-4 w-4" />Bài trước
+            </Btn>
+            <div className="flex gap-2">
+              {!checked
+                ? <Btn onClick={submit} disabled={Object.keys(resp).length < item.questions.length}>Chấm điểm</Btn>
+                : <Btn onClick={finish}>{idx < LISTENING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}</Btn>}
+            </div>
+          </div>
+          {checked && (
+            <div className="rounded-2xl bg-blue-50 p-4 text-blue-900">
+              <strong>Kết quả: {score}/{item.questions.length}</strong>
+              <details className="mt-2">
+                <summary className="cursor-pointer text-sm">Xem transcript</summary>
+                <p className="mt-2 text-sm italic">{item.script}</p>
+              </details>
+            </div>
+          )}
+        </div>
+      )}
+
+      {mode === 'dictation' && (
+        <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <p className="text-slate-600">Nghe và gõ lại chính xác câu bạn nghe được.</p>
+          <textarea rows="3" value={dictation} onChange={e => setDictation(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 p-3 font-mono text-sm"
+            placeholder="Type what you hear..." />
+          <div className="flex flex-wrap justify-between gap-2">
+            <Btn variant="ghost" onClick={prev} disabled={idx === 0}>Bài trước</Btn>
+            <div className="flex gap-2">
+              <Btn onClick={submit} disabled={!dictation.trim()}>Chấm điểm</Btn>
+              {dictResult && (
+                <Btn onClick={finish}>
+                  {idx < LISTENING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+                </Btn>
+              )}
+            </div>
+          </div>
+          {dictResult && (
+            <div className={`rounded-xl p-4 ${dictResult.score >= 80 ? 'bg-emerald-50 text-emerald-900' : 'bg-amber-50 text-amber-900'}`}>
+              <div className="font-bold">Độ khớp: {dictResult.score}%</div>
+              <div className="mt-2 text-sm">Câu gốc: <em>{dictResult.correct}</em></div>
+              <div className="mt-1 text-sm">Bạn viết: <em>{dictation}</em></div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+========================================
+FILE: src/skills/Reading.jsx
+========================================
+
+import { useState } from 'react'
+import { ArrowLeft, CheckCircle2, XCircle, BookOpenCheck } from 'lucide-react'
+import { READING } from './data'
+
+export default function Reading({ onComplete, onBack }) {
+  const [idx, setIdx] = useState(0)
+  const [resp, setResp] = useState({})
+  const [checked, setChecked] = useState(false)
+  const item = READING[idx]
+
+  const reset = () => { setResp({}); setChecked(false) }
+  const next = () => {
+    reset()
+    if (idx < READING.length - 1) setIdx(i => i + 1)
+    else onBack()
+  }
+  const prev = () => {
+    reset()
+    setIdx(i => Math.max(0, i - 1))
+  }
+  const score = item.questions.reduce((s, q, i) => s + (resp[i] === q.answer ? 1 : 0), 0)
+
+  const submit = () => {
+    setChecked(true)
+    onComplete?.(item.id, Math.round(score / item.questions.length * 100))
+  }
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Quay lại
+        </button>
+        <div className="text-sm text-slate-500">Bài {idx + 1}/{READING.length} · {item.level}</div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-100 text-emerald-700">
+            <BookOpenCheck />
+          </div>
+          <h1 className="text-2xl font-bold">{item.title}</h1>
+        </div>
+        <article className="mt-5 max-w-none leading-8 text-slate-800">
+          {item.passage.split('\n').map((p, i) => <p key={i} className="mt-3">{p}</p>)}
+        </article>
+      </div>
+
+      <div className="space-y-4">
+        {item.questions.map((q, i) => (
+          <div key={i} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="font-semibold">{i + 1}. {q.q}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {q.choices.map((c, j) => {
+                const chosen = resp[i] === j
+                const right = checked && j === q.answer
+                const wrong = checked && chosen && j !== q.answer
+                return (
+                  <button key={j} disabled={checked}
+                    onClick={() => setResp(r => ({ ...r, [i]: j }))}
+                    className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition ${
+                      right ? 'border-emerald-500 bg-emerald-50'
+                      : wrong ? 'border-red-500 bg-red-50'
+                      : chosen ? 'border-blue-600 bg-blue-50'
+                      : 'border-slate-200 hover:border-blue-300'
+                    }`}>
+                    <span className="grid h-7 w-7 place-items-center rounded-full border text-sm font-bold">
+                      {String.fromCharCode(65 + j)}
+                    </span>
+                    <span>{c}</span>
+                    {right && <CheckCircle2 className="ml-auto h-5 w-5 text-emerald-600" />}
+                    {wrong && <XCircle className="ml-auto h-5 w-5 text-red-600" />}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+
+        <div className="flex flex-wrap justify-between gap-2">
+          <button onClick={prev} disabled={idx === 0}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45">
+            Bài trước
+          </button>
+          {!checked
+            ? <button onClick={submit} disabled={Object.keys(resp).length < item.questions.length}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-45">
+                Chấm điểm
+              </button>
+            : <button onClick={next}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
+                {idx < READING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+              </button>}
+        </div>
+
+        {checked && (
+          <div className="rounded-2xl bg-blue-50 p-4 text-blue-900">
+            <strong>Kết quả: {score}/{item.questions.length}</strong>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+========================================
+FILE: src/skills/SkillsHub.jsx
+========================================
+
+import { Headphones, Mic, BookOpenCheck, PenLine, ChevronRight } from 'lucide-react'
+
+const SKILLS = [
+  { id: 'listening', icon: <Headphones />,    title: 'Listening', vi: 'Luyện nghe',   desc: 'Nghe – trả lời & chép chính tả', color: 'from-sky-500 to-blue-700' },
+  { id: 'speaking',  icon: <Mic />,           title: 'Speaking',  vi: 'Luyện nói',    desc: 'Đọc theo mẫu, chấm phát âm',     color: 'from-rose-500 to-pink-700' },
+  { id: 'reading',   icon: <BookOpenCheck />, title: 'Reading',   vi: 'Đọc hiểu',     desc: 'Trắc nghiệm theo cấp độ',        color: 'from-emerald-500 to-teal-700' },
+  { id: 'writing',   icon: <PenLine />,       title: 'Writing',   vi: 'Luyện viết',   desc: 'Chấm sơ bộ + bài mẫu',           color: 'from-amber-500 to-orange-700' }
+]
+
+export default function SkillsSection({ go, progress = {} }) {
+  return (
+    <section>
+      <div className="mb-5">
+        <h2 className="text-2xl font-black md:text-3xl">4 kỹ năng</h2>
+        <p className="mt-1 text-slate-500">
+          Nghe – Nói – Đọc – Viết, luyện tương tác ngay trong trình duyệt.
+        </p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {SKILLS.map(s => {
+          const p = progress[s.id] || {}
+          const total = p.total || 0
+          const done = p.done || 0
+          const pct = total ? Math.round((done / total) * 100) : 0
+          return (
+            <button
+              key={s.id}
+              onClick={() => go(s.id)}
+              className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${s.color} p-5 text-left text-white shadow-md transition hover:scale-[1.02] hover:shadow-xl active:scale-[.99]`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="grid h-12 w-12 place-items-center rounded-xl bg-white/20 backdrop-blur">
+                  <span className="[&>svg]:h-6 [&>svg]:w-6">{s.icon}</span>
+                </div>
+                <ChevronRight className="h-5 w-5 opacity-70 transition group-hover:translate-x-1" />
+              </div>
+              <h3 className="mt-4 text-lg font-black">{s.title}</h3>
+              <p className="text-xs text-white/85">{s.vi}</p>
+              <p className="mt-2 text-xs text-white/75">{s.desc}</p>
+              <div className="mt-4 flex items-center justify-between text-xs">
+                <span className="tabular-nums text-white/90">{done}/{total}</span>
+                <span className="rounded-full bg-white/20 px-2 py-0.5 font-semibold tabular-nums">{pct}%</span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/20">
+                <div className="h-full rounded-full bg-white/80 transition-all" style={{ width: `${pct}%` }} />
+              </div>
+            </button>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+========================================
+FILE: src/skills/Speaking.jsx
+========================================
+
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowLeft, Mic, MicOff, Volume2, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
+import { SPEAKING } from './data'
+import { getRecognition, speak, stopSpeaking, scorePronunciation } from './utils'
+
+export default function Speaking({ onComplete, onBack }) {
+  const [idx, setIdx] = useState(0)
+  const [listening, setListening] = useState(false)
+  const [transcript, setTranscript] = useState('')
+  const [result, setResult] = useState(null)
+  const [showSample, setShowSample] = useState(false)
+  const recRef = useRef(null)
+  const item = SPEAKING[idx]
+  const supported = useMemo(() => !!getRecognition(), [])
+
+  useEffect(() => () => {
+    stopSpeaking()
+    try { recRef.current?.stop() } catch {}
+  }, [])
+
+  const startListen = () => {
+    const rec = getRecognition()
+    if (!rec) return
+    recRef.current = rec
+    setTranscript(''); setResult(null)
+    rec.onresult = e => {
+      const text = Array.from(e.results).map(r => r[0].transcript).join(' ')
+      setTranscript(text)
+      const score = scorePronunciation(text, item.target)
+      setResult({ score, text })
+      onComplete?.(item.id, score)
+    }
+    rec.onerror = e => setResult({ score: 0, text: '', error: e.error })
+    rec.onend = () => setListening(false)
+    try { rec.start(); setListening(true) } catch { setListening(false) }
+  }
+
+  const stopListen = () => {
+    try { recRef.current?.stop() } catch {}
+    setListening(false)
+  }
+
+  const next = () => {
+    setTranscript(''); setResult(null); setShowSample(false); stopSpeaking()
+    if (idx < SPEAKING.length - 1) setIdx(i => i + 1)
+    else onBack()
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Quay lại
+        </button>
+        <div className="text-sm text-slate-500">Bài {idx + 1}/{SPEAKING.length} · {item.level}</div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-bold">{item.title}</h1>
+        <p className="mt-3 text-slate-700">{item.prompt}</p>
+
+        <div className="mt-5 rounded-xl bg-slate-50 p-4">
+          <div className="text-xs font-bold uppercase text-slate-500">Câu mẫu</div>
+          {showSample
+            ? <p className="mt-2 text-slate-800">{item.target}</p>
+            : <button onClick={() => setShowSample(true)} className="mt-2 text-sm font-semibold text-blue-600">
+                Nhấn để xem câu mẫu
+              </button>}
+          <button onClick={() => speak(item.target, { rate: 0.85 })}
+            className="mt-3 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800">
+            <Volume2 className="h-4 w-4" /> Nghe mẫu
+          </button>
+        </div>
+
+        <div className="mt-6 grid place-items-center">
+          <button onClick={listening ? stopListen : startListen} disabled={!supported}
+            className={`grid h-24 w-24 place-items-center rounded-full text-white shadow-lg transition ${
+              listening ? 'bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'
+            } disabled:opacity-40`}>
+            {listening ? <MicOff size={40} /> : <Mic size={40} />}
+          </button>
+          <p className="mt-3 text-sm text-slate-500">
+            {listening ? 'Đang nghe... hãy nói rõ ràng.' : 'Nhấn micro và đọc to theo câu mẫu.'}
+          </p>
+        </div>
+
+        {!supported && (
+          <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+            Trình duyệt không hỗ trợ nhận diện giọng nói. Dùng Chrome/Edge trên desktop hoặc Chrome Android.
+          </p>
+        )}
+
+        {(transcript || result) && (
+          <div className="mt-5 space-y-3">
+            <div className="rounded-xl border border-slate-200 p-4">
+              <div className="text-xs font-bold uppercase text-slate-500">Bạn đã nói</div>
+              <p className="mt-1 italic text-slate-800">{transcript || '(chưa nhận diện được)'}</p>
+            </div>
+            {result && (
+              <div className={`rounded-xl p-4 ${
+                result.score >= 80 ? 'bg-emerald-50 text-emerald-900'
+                : result.score >= 50 ? 'bg-amber-50 text-amber-900'
+                : 'bg-red-50 text-red-900'
+              }`}>
+                <div className="flex items-center gap-2">
+                  {result.score >= 80 ? <CheckCircle2 /> : <XCircle />}
+                  <strong>Điểm phát âm ước lượng: {result.score}/100</strong>
+                </div>
+                {result.error && (
+                  <p className="mt-1 text-sm">
+                    Lỗi: {result.error}. Hãy cấp quyền micro và thử lại.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-6 flex flex-wrap justify-between gap-2">
+          <button onClick={() => { setTranscript(''); setResult(null); setShowSample(false) }}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+            <RotateCcw className="h-4 w-4" /> Thử lại
+          </button>
+          <button onClick={next}
+            className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
+            {idx < SPEAKING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+========================================
+FILE: src/skills/Writing.jsx
+========================================
+
+import { useMemo, useState } from 'react'
+import { ArrowLeft, PenLine, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { WRITING } from './data'
+import { scoreWriting } from './utils'
+
+export default function Writing({ onComplete, onBack }) {
+  const [idx, setIdx] = useState(0)
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
+  const [showSample, setShowSample] = useState(false)
+  const item = WRITING[idx]
+
+  const live = useMemo(() => {
+    const w = text.trim().split(/\s+/).filter(Boolean).length
+    return { words: w, target: item.minWords, ok: w >= item.minWords }
+  }, [text, item.minWords])
+
+  const reset = () => { setText(''); setResult(null); setShowSample(false) }
+
+  const check = () => {
+    const r = scoreWriting(text, { minWords: item.minWords, keywords: item.keywords })
+    setResult(r)
+    onComplete?.(item.id, r.score)
+  }
+
+  const next = () => {
+    reset()
+    if (idx < WRITING.length - 1) setIdx(i => i + 1)
+    else onBack()
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Quay lại
+        </button>
+        <div className="text-sm text-slate-500">Bài {idx + 1}/{WRITING.length} · {item.level}</div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-100 text-amber-700">
+            <PenLine />
+          </div>
+          <h1 className="text-2xl font-bold">{item.title}</h1>
+        </div>
+        <p className="mt-3 text-slate-700">{item.prompt}</p>
+
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          {item.keywords.map(k => (
+            <span key={k} className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">#{k}</span>
+          ))}
+        </div>
+
+        <textarea value={text} onChange={e => setText(e.target.value)} rows="9"
+          placeholder="Viết bài của bạn bằng tiếng Anh..."
+          className="mt-5 w-full rounded-2xl border border-slate-300 p-4 leading-7 outline-none focus:border-blue-500" />
+
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <span className={live.ok ? 'text-emerald-600' : 'text-slate-500'}>
+            {live.words}/{live.target} từ tối thiểu
+          </span>
+          <span className="text-slate-400">{text.length} ký tự</span>
+        </div>
+
+        <div className="mt-5 flex flex-wrap justify-between gap-2">
+          <button onClick={reset}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+            <RotateCcw className="h-4 w-4" /> Xóa
+          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowSample(s => !s)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+              {showSample ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showSample ? 'Ẩn bài mẫu' : 'Xem bài mẫu'}
+            </button>
+            <button onClick={check} disabled={!text.trim()}
+              className="rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 disabled:opacity-45">
+              Chấm điểm
+            </button>
+          </div>
+        </div>
+
+        {showSample && (
+          <div className="mt-4 rounded-xl bg-slate-50 p-4">
+            <div className="text-xs font-bold uppercase text-slate-500">Bài mẫu</div>
+            <p className="mt-2 leading-7 text-slate-800">{item.sample}</p>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-5 space-y-3">
+            <div className={`rounded-2xl p-4 ${
+              result.score >= 80 ? 'bg-emerald-50 text-emerald-900'
+              : result.score >= 50 ? 'bg-amber-50 text-amber-900'
+              : 'bg-red-50 text-red-900'
+            }`}>
+              <div className="text-lg font-bold">Điểm sơ bộ: {result.score}/100</div>
+              <div className="text-sm">Số từ: {result.words} · Số câu: {result.sentences}</div>
+            </div>
+            {result.notes.length > 0 && (
+              <ul className="list-disc space-y-1 rounded-xl bg-slate-50 p-4 pl-8 text-sm text-slate-700">
+                {result.notes.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
+            )}
+            <div className="flex justify-end">
+              <button onClick={next}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
+                {idx < WRITING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+========================================
+FILE: src/skills/Writting.jsx
+========================================
+
+import { useMemo, useState } from 'react'
+import { ArrowLeft, PenLine, Eye, EyeOff, RotateCcw } from 'lucide-react'
+import { WRITING } from './data'
+import { scoreWriting } from './utils'
+
+export default function Writing({ onComplete, onBack }) {
+  const [idx, setIdx] = useState(0)
+  const [text, setText] = useState('')
+  const [result, setResult] = useState(null)
+  const [showSample, setShowSample] = useState(false)
+  const item = WRITING[idx]
+
+  const live = useMemo(() => {
+    const w = text.trim().split(/\s+/).filter(Boolean).length
+    return { words: w, target: item.minWords, ok: w >= item.minWords }
+  }, [text, item.minWords])
+
+  const reset = () => { setText(''); setResult(null); setShowSample(false) }
+
+  const check = () => {
+    const r = scoreWriting(text, { minWords: item.minWords, keywords: item.keywords })
+    setResult(r)
+    onComplete?.(item.id, r.score)
+  }
+
+  const next = () => {
+    reset()
+    if (idx < WRITING.length - 1) setIdx(i => i + 1)
+    else onBack()
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Quay lại
+        </button>
+        <div className="text-sm text-slate-500">Bài {idx + 1}/{WRITING.length} · {item.level}</div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-100 text-amber-700">
+            <PenLine />
+          </div>
+          <h1 className="text-2xl font-bold">{item.title}</h1>
+        </div>
+        <p className="mt-3 text-slate-700">{item.prompt}</p>
+
+        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+          {item.keywords.map(k => (
+            <span key={k} className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">#{k}</span>
+          ))}
+        </div>
+
+        <textarea value={text} onChange={e => setText(e.target.value)} rows="9"
+          placeholder="Viết bài của bạn bằng tiếng Anh..."
+          className="mt-5 w-full rounded-2xl border border-slate-300 p-4 leading-7 outline-none focus:border-blue-500" />
+
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <span className={live.ok ? 'text-emerald-600' : 'text-slate-500'}>
+            {live.words}/{live.target} từ tối thiểu
+          </span>
+          <span className="text-slate-400">{text.length} ký tự</span>
+        </div>
+
+        <div className="mt-5 flex flex-wrap justify-between gap-2">
+          <button onClick={reset}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+            <RotateCcw className="h-4 w-4" /> Xóa
+          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowSample(s => !s)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+              {showSample ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showSample ? 'Ẩn bài mẫu' : 'Xem bài mẫu'}
+            </button>
+            <button onClick={check} disabled={!text.trim()}
+              className="rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 disabled:opacity-45">
+              Chấm điểm
+            </button>
+          </div>
+        </div>
+
+        {showSample && (
+          <div className="mt-4 rounded-xl bg-slate-50 p-4">
+            <div className="text-xs font-bold uppercase text-slate-500">Bài mẫu</div>
+            <p className="mt-2 leading-7 text-slate-800">{item.sample}</p>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-5 space-y-3">
+            <div className={`rounded-2xl p-4 ${
+              result.score >= 80 ? 'bg-emerald-50 text-emerald-900'
+              : result.score >= 50 ? 'bg-amber-50 text-amber-900'
+              : 'bg-red-50 text-red-900'
+            }`}>
+              <div className="text-lg font-bold">Điểm sơ bộ: {result.score}/100</div>
+              <div className="text-sm">Số từ: {result.words} · Số câu: {result.sentences}</div>
+            </div>
+            {result.notes.length > 0 && (
+              <ul className="list-disc space-y-1 rounded-xl bg-slate-50 p-4 pl-8 text-sm text-slate-700">
+                {result.notes.map((n, i) => <li key={i}>{n}</li>)}
+              </ul>
+            )}
+            <div className="flex justify-end">
+              <button onClick={next}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
+                {idx < WRITING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+========================================
+FILE: src/skills/data.js
+========================================
+
+// ============================================================
+// LISTENING – transcript + câu hỏi trắc nghiệm + câu dictation
+// ============================================================
+export const LISTENING = [
+  {
+    id: 'L1', title: 'Daily routine', level: 'Cơ bản', accent: 'en-US', rate: 0.9,
+    script: `Every morning I wake up at six o'clock. I brush my teeth, take a quick shower and have breakfast with my family. After breakfast I leave home at seven thirty and go to work by bus.`,
+    questions: [
+      { q: 'What time does the speaker wake up?', choices: ['At 6', 'At 6:30', 'At 7', 'At 7:30'], answer: 0 },
+      { q: 'How does the speaker go to work?', choices: ['By car', 'By train', 'By bus', 'On foot'], answer: 2 },
+      { q: 'Who does the speaker have breakfast with?', choices: ['Alone', 'With friends', 'With family', 'With colleagues'], answer: 2 }
+    ],
+    dictation: `Every morning I wake up at six o'clock.`
+  },
+  {
+    id: 'L2', title: 'At the office', level: 'Cơ bản', accent: 'en-US', rate: 0.9,
+    script: `Hi Nam, this is Lan. The meeting this afternoon starts at two thirty, not three. Please bring the sales report and the updated client list. We will meet in room 402 on the fourth floor.`,
+    questions: [
+      { q: 'When does the meeting start?', choices: ['2:00', '2:30', '3:00', '4:00'], answer: 1 },
+      { q: 'Which room is the meeting in?', choices: ['204', '304', '402', '420'], answer: 2 },
+      { q: 'What should Nam bring?', choices: ['A laptop and a projector', 'The sales report and client list', 'Coffee for everyone', 'The contract'], answer: 1 }
+    ],
+    dictation: `The meeting this afternoon starts at two thirty.`
+  },
+  {
+    id: 'L3', title: 'Shopping', level: 'Vừa', accent: 'en-US', rate: 1.0,
+    script: `Good morning. I'd like to buy two T-shirts and a pair of jeans. Do you have them in medium size? The jeans are a bit long, so I need a shorter pair. Also, is there a discount if I pay by card?`,
+    questions: [
+      { q: 'What size does the customer want?', choices: ['Small', 'Medium', 'Large', 'Extra large'], answer: 1 },
+      { q: 'What problem does the customer have with the jeans?', choices: ['Wrong color', 'Too expensive', 'Too long', 'Too tight'], answer: 2 },
+      { q: 'What does the customer ask about?', choices: ['A refund', 'A discount', 'A different shop', 'Free delivery'], answer: 1 }
+    ],
+    dictation: `I'd like to buy two T-shirts and a pair of jeans.`
+  },
+  {
+    id: 'L4', title: 'Travel announcement', level: 'Vừa', accent: 'en-US', rate: 1.0,
+    script: `Attention passengers. Flight VN 218 to Da Nang is now boarding at gate twelve. Please have your boarding pass and identification ready. Boarding will close fifteen minutes before departure.`,
+    questions: [
+      { q: 'Where is the flight going?', choices: ['Ha Noi', 'Ho Chi Minh City', 'Da Nang', 'Hue'], answer: 2 },
+      { q: 'At which gate does the flight board?', choices: ['2', '10', '12', '20'], answer: 2 },
+      { q: 'When does boarding close?', choices: ['5 min before departure', '10 min before', '15 min before', '30 min before'], answer: 2 }
+    ],
+    dictation: `Flight VN 218 to Da Nang is now boarding at gate twelve.`
+  },
+  {
+    id: 'L5', title: 'Job interview', level: 'Nâng cao', accent: 'en-US', rate: 1.0,
+    script: `Thank you for coming in. Could you tell me about your previous role? In your last job, what was the biggest challenge you faced, and how did you handle it? We're also interested in why you want to join our team.`,
+    questions: [
+      { q: 'What is the interviewer mainly doing?', choices: ['Offering a job', 'Asking about experience', 'Explaining salary', 'Rejecting the candidate'], answer: 1 },
+      { q: 'What is asked about the previous job?', choices: ['Salary', 'A challenge and how it was handled', 'Vacation days', 'Team size'], answer: 1 },
+      { q: 'Why does the interviewer mention "our team"?', choices: ['To praise the team', 'To ask about motivation', 'To fire someone', 'To change the topic'], answer: 1 }
+    ],
+    dictation: `Could you tell me about your previous role?`
+  }
+]
+
+// ============================================================
+// SPEAKING – câu mẫu, gợi ý, từ khóa
+// ============================================================
+export const SPEAKING = [
+  {
+    id: 'S1', title: 'Introduce yourself', level: 'Cơ bản',
+    prompt: 'Giới thiệu bản thân trong 4 câu: tên, tuổi/nơi ở, nghề nghiệp, sở thích.',
+    target: `Hi, my name is Nam. I am twenty five years old and I live in Ha Noi. I work as a software engineer. In my free time, I enjoy reading and playing football.`,
+    keywords: ['name', 'years old', 'live', 'work', 'enjoy']
+  },
+  {
+    id: 'S2', title: 'Order food', level: 'Cơ bản',
+    prompt: 'Gọi món ở nhà hàng: chào, gọi món chính, gọi đồ uống, xin hóa đơn.',
+    target: `Good evening. I would like a bowl of beef noodles and an iced tea, please. Could I have the bill when you have a moment?`,
+    keywords: ['would like', 'please', 'bill']
+  },
+  {
+    id: 'S3', title: 'Ask for directions', level: 'Cơ bản',
+    prompt: 'Hỏi đường đến nhà ga và hỏi còn bao xa.',
+    target: `Excuse me, could you tell me how to get to the railway station? Is it far from here? Should I take a taxi or can I walk?`,
+    keywords: ['excuse me', 'how to get', 'far', 'taxi']
+  },
+  {
+    id: 'S4', title: 'Describe your job', level: 'Vừa',
+    prompt: 'Mô tả công việc hiện tại: vai trò, nhiệm vụ chính, điều thích nhất.',
+    target: `I work as a marketing executive at a small company. My main tasks are planning campaigns and analyzing customer data. What I like most is meeting new people.`,
+    keywords: ['work as', 'main task', 'like most']
+  },
+  {
+    id: 'S5', title: 'Weekend plans', level: 'Vừa',
+    prompt: 'Nói về kế hoạch cuối tuần (dùng "going to" hoặc hiện tại tiếp diễn).',
+    target: `This weekend I am going to visit my parents in the countryside. On Saturday morning we are going to have a small family lunch, and on Sunday I will come back to the city.`,
+    keywords: ['weekend', 'going to', 'Saturday', 'Sunday']
+  },
+  {
+    id: 'S6', title: 'Phone call – appointment', level: 'Nâng cao',
+    prompt: 'Gọi điện đặt lịch hẹn với bác sĩ, nói rõ thời gian và lý do.',
+    target: `Hello, this is Nam speaking. I would like to make an appointment with Doctor Minh for next Tuesday morning. I have had a sore throat for three days and I need a check-up.`,
+    keywords: ['appointment', 'next', 'sore', 'check-up']
+  }
+]
+
+// ============================================================
+// READING – đoạn văn + câu hỏi
+// ============================================================
+export const READING = [
+  {
+    id: 'R1', title: 'My family', level: 'Cơ bản',
+    passage: `My family has four people: my parents, my younger sister and me. My father is an engineer and my mother is a teacher. My sister is still in high school. We live in a small apartment in Ha Noi. On weekends, we usually have dinner together and talk about our week.`,
+    questions: [
+      { q: 'How many people are in the family?', choices: ['Two', 'Three', 'Four', 'Five'], answer: 2 },
+      { q: 'What does the mother do?', choices: ['Engineer', 'Teacher', 'Doctor', 'Nurse'], answer: 1 },
+      { q: 'What does the family do on weekends?', choices: ['Travel abroad', 'Have dinner together', 'Visit the cinema', 'Go shopping'], answer: 1 }
+    ]
+  },
+  {
+    id: 'R2', title: 'A trip to Da Nang', level: 'Vừa',
+    passage: `Last summer, my friends and I spent five days in Da Nang. We stayed at a small hotel near My Khe beach. In the mornings, we swam and had breakfast at a local café. In the afternoons, we visited Ba Na Hills and the Marble Mountains. The weather was hot but the sea was wonderful. We took hundreds of photos and promised to come back the following year.`,
+    questions: [
+      { q: 'How long was the trip?', choices: ['3 days', '4 days', '5 days', '7 days'], answer: 2 },
+      { q: 'Where did they stay?', choices: ['A resort', 'A small hotel', 'A homestay', 'With friends'], answer: 1 },
+      { q: 'What did they do in the afternoons?', choices: ['Swim', 'Sleep', 'Visit places', 'Go shopping'], answer: 2 },
+      { q: 'What promise did they make?', choices: ['To return next year', 'To move there', 'To tell everyone', 'To write a blog'], answer: 0 }
+    ]
+  },
+  {
+    id: 'R3', title: 'Working from home', level: 'Vừa',
+    passage: `Working from home has become common in many companies. Employees save time on commuting and can plan their day more flexibly. However, working from home also has challenges. Some people find it hard to separate work from personal life. Others miss the quick conversations with colleagues in the office. For this reason, many companies now choose a hybrid model, where staff work at home two or three days a week.`,
+    questions: [
+      { q: 'What is one benefit mentioned?', choices: ['Higher salary', 'Saving commuting time', 'Free lunch', 'Longer holidays'], answer: 1 },
+      { q: 'What is one challenge mentioned?', choices: ['Slow internet', 'Difficult to separate work and personal life', 'No promotions', 'Cold weather'], answer: 1 },
+      { q: 'What model do many companies choose now?', choices: ['Fully remote', 'Fully office', 'Hybrid', 'Four-day week'], answer: 2 }
+    ]
+  },
+  {
+    id: 'R4', title: 'Health and exercise', level: 'Nâng cao',
+    passage: `Regular exercise is one of the most effective ways to improve both physical and mental health. According to the World Health Organization, adults should do at least one hundred and fifty minutes of moderate exercise per week. This can include brisk walking, cycling or swimming. Exercise helps control weight, strengthens the heart and reduces stress. Even short sessions of ten minutes can add up and produce real benefits over time.`,
+    questions: [
+      { q: 'How many minutes of moderate exercise per week does WHO recommend?', choices: ['60', '100', '150', '200'], answer: 2 },
+      { q: 'Which of the following is NOT listed as exercise?', choices: ['Brisk walking', 'Cycling', 'Swimming', 'Watching TV'], answer: 3 },
+      { q: 'What is one benefit of exercise mentioned?', choices: ['Higher income', 'Reduced stress', 'Better memory of names', 'Longer hair'], answer: 1 },
+      { q: 'What does the passage say about short sessions?', choices: ['They are useless', 'They add up over time', 'They replace sleep', 'They cause injury'], answer: 1 }
+    ]
+  }
+]
+
+// ============================================================
+// WRITING – đề bài, gợi ý, từ khóa, bài mẫu
+// ============================================================
+export const WRITING = [
+  {
+    id: 'W1', title: 'My daily routine', level: 'Cơ bản',
+    prompt: 'Viết 5–7 câu (tối thiểu 50 từ) miêu tả thói quen hàng ngày của bạn. Dùng thì hiện tại đơn.',
+    minWords: 50,
+    keywords: ['wake up', 'breakfast', 'work', 'evening', 'usually', 'every day'],
+    sample: `Every day I wake up at six o'clock. I brush my teeth and have breakfast with my family. I usually go to work by motorbike. In the afternoon, I often check my emails and finish my tasks. In the evening, I cook dinner and watch a short video. I go to bed at about eleven.`
+  },
+  {
+    id: 'W2', title: 'Introduce yourself', level: 'Cơ bản',
+    prompt: 'Viết một đoạn giới thiệu bản thân (tên, tuổi, nơi ở, nghề nghiệp, sở thích). Tối thiểu 40 từ.',
+    minWords: 40,
+    keywords: ['name', 'live', 'work', 'hobby', 'like'],
+    sample: `My name is Nam. I am twenty-five years old and I live in Ha Noi. I work as a software engineer at a small company. In my free time, I like reading books and playing football with my friends. I also enjoy learning English.`
+  },
+  {
+    id: 'W3', title: 'Email to a colleague', level: 'Vừa',
+    prompt: 'Viết email ngắn (tối thiểu 60 từ) cho đồng nghiệp: xin nghỉ 1 ngày, nêu lý do và đề xuất người thay thế.',
+    minWords: 60,
+    keywords: ['Dear', 'I would like', 'because', 'regards', 'thank you'],
+    sample: `Dear Lan, I would like to take one day off next Friday because I have a medical appointment in the morning. I have already told Minh about the pending tasks, and he is happy to help while I am away. Please let me know if you need anything else from me. Thank you very much. Best regards, Nam.`
+  },
+  {
+    id: 'W4', title: 'Describe your hometown', level: 'Vừa',
+    prompt: 'Viết một đoạn (tối thiểu 70 từ) miêu tả quê bạn: vị trí, con người, điều bạn thích nhất.',
+    minWords: 70,
+    keywords: ['located', 'people', 'famous', 'because', 'I love'],
+    sample: `My hometown is a small city in the north of Vietnam. It is located near a river and surrounded by green rice fields. The people here are very friendly and always willing to help each other. The city is famous for its traditional food, especially grilled fish. I love my hometown because it is peaceful and the pace of life is slow. Whenever I return, I feel relaxed.`
+  },
+  {
+    id: 'W5', title: 'Complaint email', level: 'Nâng cao',
+    prompt: 'Viết email khiếu nại (tối thiểu 80 từ) về một sản phẩm bị lỗi. Nêu vấn đề, yêu cầu và thời hạn.',
+    minWords: 80,
+    keywords: ['order', 'problem', 'refund', 'replace', 'look forward'],
+    sample: `Dear Customer Service, I am writing to report a problem with my recent order number 98765. The laptop I received does not turn on, even after charging for several hours. I believe the device was damaged during shipping. I would like to request a replacement or a full refund within seven working days. Please confirm how I should return the item. I look forward to your reply. Best regards, Nam.`
+  },
+  {
+    id: 'W6', title: 'Opinion paragraph', level: 'Nâng cao',
+    prompt: 'Viết đoạn nêu ý kiến (tối thiểu 90 từ): "Học online có thay thế được học trên lớp?" Đưa 2 lý do.',
+    minWords: 90,
+    keywords: ['In my opinion', 'firstly', 'secondly', 'however', 'therefore'],
+    sample: `In my opinion, online learning cannot completely replace classroom learning. Firstly, online courses are flexible and help students save time on commuting, so they are useful for busy people. Secondly, however, classroom learning offers direct interaction with teachers and classmates, which improves motivation and communication skills. Therefore, I believe the best solution is a mix of online and offline learning.`
+  }
+]
+
+export const SKILL_TOTALS = {
+  listening: LISTENING.length,
+  speaking: SPEAKING.length,
+  reading: READING.length,
+  writing: WRITING.length
+}
+
+========================================
+FILE: src/skills/utils.js
+========================================
+
+// Web Speech helpers + scoring (Nghe – Nói – Viết)
+export const speechSupported = () =>
+  typeof window !== 'undefined' && 'speechSynthesis' in window
+
+export const speak = (text, { rate = 0.9, lang = 'en-US', pitch = 1, onEnd } = {}) => {
+  if (!speechSupported()) return false
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  u.lang = lang
+  u.rate = rate
+  u.pitch = pitch
+  const voices = window.speechSynthesis.getVoices()
+  const prefer =
+    voices.find(v => v.lang === lang && /female|samantha|zira|aria|google us/i.test(v.name)) ||
+    voices.find(v => v.lang === lang) ||
+    voices.find(v => v.lang.startsWith('en'))
+  if (prefer) u.voice = prefer
+  if (onEnd) u.onend = onEnd
+  window.speechSynthesis.speak(u)
+  return true
+}
+
+export const stopSpeaking = () => {
+  try { window.speechSynthesis?.cancel() } catch {}
+}
+
+export const getRecognition = () => {
+  if (typeof window === 'undefined') return null
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SR) return null
+  const r = new SR()
+  r.lang = 'en-US'
+  r.interimResults = false
+  r.maxAlternatives = 3
+  r.continuous = false
+  return r
+}
+
+export const normalize = s =>
+  (s || '')
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s']/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+export const wordOverlap = (spoken, target) => {
+  const a = normalize(spoken).split(' ').filter(Boolean)
+  const t = normalize(target).split(' ').filter(Boolean)
+  if (!t.length) return 0
+  const set = new Set(a)
+  const hit = t.filter(w => set.has(w)).length
+  return hit / t.length
+}
+
+export const charSimilarity = (a, b) => {
+  a = normalize(a); b = normalize(b)
+  if (!a || !b) return 0
+  const m = a.length, n = b.length
+  if (Math.abs(m - n) > Math.max(m, n) * 0.7) return 0
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i, ...Array(n).fill(0)])
+  for (let j = 0; j <= n; j++) dp[0][j] = j
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+  return 1 - dp[m][n] / Math.max(m, n)
+}
+
+export const scorePronunciation = (spoken, target) => {
+  const w = wordOverlap(spoken, target)
+  const c = charSimilarity(spoken, target)
+  return Math.round((w * 0.7 + c * 0.3) * 100)
+}
+
+export const scoreWriting = (
+  text,
+  { minWords = 40, keywords = [], mustEndWithPeriod = true } = {}
+) => {
+  const words = (text || '').trim().split(/\s+/).filter(Boolean)
+  const n = words.length
+  const notes = []
+  let score = 0
+
+  if (n === 0) return { score: 0, words: 0, sentences: 0, notes: ['Bạn chưa viết gì.'] }
+
+  const lengthRatio = Math.min(1, n / minWords)
+  score += Math.round(lengthRatio * 30)
+  if (n < minWords) notes.push(`Nên viết ít nhất ${minWords} từ (bạn viết ${n}).`)
+
+  if (keywords.length) {
+    const low = normalize(text)
+    const hit = keywords.filter(k => low.includes(normalize(k))).length
+    score += Math.round((hit / keywords.length) * 30)
+    if (hit < keywords.length) {
+      const missing = keywords.filter(k => !low.includes(normalize(k)))
+      notes.push(`Thiếu ý/từ khóa gợi ý: ${missing.join(', ')}.`)
+    }
+  } else score += 30
+
+  let gram = 20
+  if (text[0] !== text[0].toUpperCase()) {
+    gram -= 5
+    notes.push('Câu đầu nên viết hoa chữ cái đầu.')
+  }
+  if (mustEndWithPeriod && !/[.!?]\s*$/.test(text.trim())) {
+    gram -= 4
+    notes.push('Câu cuối nên có dấu kết câu (. ! ?).')
+  }
+  if (/\s{2,}/.test(text)) {
+    gram -= 3
+    notes.push('Có khoảng trắng dư thừa.')
+  }
+  if (/[a-z]\.[a-z]/i.test(text)) {
+    gram -= 4
+    notes.push('Cần dấu cách sau dấu chấm câu.')
+  }
+  score += Math.max(0, gram)
+
+  const sentences = text.split(/[.!?]+/).map(s => s.trim()).filter(Boolean)
+  const uniqRatio = sentences.length
+    ? new Set(sentences.map(normalize)).size / sentences.length
+    : 0
+  score += Math.round(uniqRatio * 20)
+  if (sentences.length < 3) notes.push('Nên viết từ 3 câu trở lên để rõ ý.')
+
+  return {
+    score: Math.min(100, score),
+    words: n,
+    sentences: sentences.length,
+    notes
+  }
+}
+
+========================================
 FILE: supabase/migrate_phase3.sql
 ========================================
 
@@ -5328,6 +7247,14 @@ create policy "Users can view own profile" on public.profiles for select using (
 create policy "Users can insert own profile" on public.profiles for insert with check (auth.uid() = id);
 create policy "Users can update own profile" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
 
+
+========================================
+FILE: supabase/migrate_phase4.sql
+========================================
+
+-- Phase 4: lưu tiến độ 4 kỹ năng Nghe/Nói/Đọc/Viết
+alter table public.learning_progress
+  add column if not exists skill_progress jsonb not null default '{}'::jsonb;
 
 ========================================
 FILE: supabase/setup.sql
@@ -5451,6 +7378,12 @@ FILE: index.html
     <meta name="theme-color" content="#1d4ed8" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Nam English" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" />
     <title>Nam English</title>
@@ -5460,7 +7393,6 @@ FILE: index.html
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-
 
 ========================================
 FILE: README.md
