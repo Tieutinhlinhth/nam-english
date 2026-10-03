@@ -2,10 +2,10 @@ import { Headphones, Mic, BookOpenCheck, PenLine, ChevronRight } from 'lucide-re
 import { useContent } from './contentStore'
 
 const SKILLS = [
-  { id: 'listening', icon: <Headphones />,    title: 'Listening', vi: 'Luyện nghe',   desc: 'Nghe – trả lời & chép chính tả', color: 'from-sky-500 to-blue-700' },
-  { id: 'speaking',  icon: <Mic />,           title: 'Speaking',  vi: 'Luyện nói',    desc: 'Đọc theo mẫu, chấm phát âm',     color: 'from-rose-500 to-pink-700' },
-  { id: 'reading',   icon: <BookOpenCheck />, title: 'Reading',   vi: 'Đọc hiểu',     desc: 'Trắc nghiệm theo cấp độ',        color: 'from-emerald-500 to-teal-700' },
-  { id: 'writing',   icon: <PenLine />,       title: 'Writing',   vi: 'Luyện viết',   desc: 'Chấm sơ bộ + bài mẫu',           color: 'from-amber-500 to-orange-700' }
+  { id: 'listening', icon: <Headphones />,    title: 'Luyện Nghe', vi: 'Nghe hiểu',       desc: 'Nghe – trả lời & chép chính tả', color: 'from-sky-500 to-blue-700' },
+  { id: 'speaking',  icon: <Mic />,           title: 'Luyện Nói',  vi: 'Phát âm',         desc: 'Đọc theo mẫu, chấm phát âm',     color: 'from-rose-500 to-pink-700' },
+  { id: 'reading',   icon: <BookOpenCheck />, title: 'Luyện Đọc',  vi: 'Đọc hiểu',        desc: 'Trắc nghiệm theo cấp độ',        color: 'from-emerald-500 to-teal-700' },
+  { id: 'writing',   icon: <PenLine />,       title: 'Luyện Viết', vi: 'Viết luận',       desc: 'Chấm sơ bộ + bài mẫu',           color: 'from-amber-500 to-orange-700' }
 ]
 
 export default function SkillsSection({ go }) {
