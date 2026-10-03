@@ -1,7 +1,31 @@
 @import "tailwindcss";
 
-:root { font-family: Inter, Arial, Helvetica, sans-serif; color: #0f172a; background: #f8fafc; }
+@theme {
+  --font-sans: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  font-family: 'Be Vietnam Pro', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: #0f172a;
+  background: #f8fafc;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; min-height: 100vh; }
-button, input { font: inherit; }
+button, input, textarea, select { font: inherit; }
+
+/* Heading nhìn gọn và hiện đại hơn */
+h1, h2, h3, h4 { letter-spacing: -0.015em; }
+
+/* Số liệu trong Stat / điểm số thẳng cột */
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+/* Scroll mượt cho overlay mobile menu */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
