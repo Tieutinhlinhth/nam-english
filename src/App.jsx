@@ -8,11 +8,16 @@ import {
   Headphones, Mic, BookOpenCheck, PenLine, Sparkles, ChevronRight
 } from 'lucide-react'
 import { LESSONS, QUESTIONS } from './questions'
+import SkillsSection from './skills/SkillsHub'
 import Listening from './skills/Listening'
 import Speaking from './skills/Speaking'
 import Reading from './skills/Reading'
 import Writing from './skills/Writing'
-import { SKILL_TOTALS } from './skills/data'
+import AdminPanel from './skills/AdminPanel'
+import {
+  loadContentFromSupabase,
+  setContent as setContentStore
+} from './skills/contentStore'
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
@@ -21,6 +26,11 @@ const read = (k, fb) => { try { return JSON.parse(localStorage.getItem(k)) ?? fb
 const save = (k, v) => localStorage.setItem(k, JSON.stringify(v))
 const lessonName = id =>
   id === 14 ? 'Kiểm tra tổng hợp' : LESSONS.find(x => x.id === id)?.title || 'Bài tập'
+
+const SUPERADMIN_EMAILS = (import.meta.env.VITE_SUPERADMIN_EMAILS || '')
+  .split(',')
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean)
 
 // ============================================================
 // UI primitives
@@ -32,7 +42,7 @@ const BTN_VARIANTS = {
   outline: 'border border-blue-600 bg-white text-blue-700 hover:bg-blue-50',
   white:   'bg-white text-blue-700 hover:bg-blue-50 shadow-sm',
   accent:  'bg-rose-500 text-white hover:bg-rose-600 shadow-sm',
-  glass:   'border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur',
+  glass:   'border border-white/40 bg-white/10 text-white hover:bg-white/20 backdrop-blur'
 }
 
 const Btn = ({ children, className = '', variant = 'primary', ...p }) => (
@@ -67,42 +77,20 @@ const Stat = ({ icon, title, value, note }) => (
   </Card>
 )
 
-// ============================================================
-// 5 lối vào chính trên Home
-// ============================================================
 const MAIN_ENTRIES = [
-  {
-    id: 'grammar', title: 'Ngữ pháp', vi: '13 bài lý thuyết • 300 câu hỏi',
-    icon: <BookOpen />, gradient: 'from-blue-600 to-indigo-700',
-    tags: ['Cấu trúc câu', 'Thì', 'Câu điều kiện', 'Bị động']
-  },
-  {
-    id: 'listening', title: 'Listening', vi: 'Nghe – trả lời & chép chính tả',
-    icon: <Headphones />, gradient: 'from-sky-500 to-blue-700',
-    tags: ['5 bài', 'Phát audio', 'Dictation']
-  },
-  {
-    id: 'speaking', title: 'Speaking', vi: 'Đọc theo mẫu, chấm phát âm',
-    icon: <Mic />, gradient: 'from-rose-500 to-pink-700',
-    tags: ['6 bài', 'Nhận diện giọng nói']
-  },
-  {
-    id: 'reading', title: 'Reading', vi: 'Đọc hiểu – trắc nghiệm theo cấp độ',
-    icon: <BookOpenCheck />, gradient: 'from-emerald-500 to-teal-700',
-    tags: ['4 bài', 'Cơ bản → Nâng cao']
-  },
-  {
-    id: 'writing', title: 'Writing', vi: 'Viết luận, chấm sơ bộ + bài mẫu',
-    icon: <PenLine />, gradient: 'from-amber-500 to-orange-700',
-    tags: ['6 đề', 'Chấm tức thì']
-  },
+  { id: 'grammar',   title: 'Ngữ pháp',  vi: '13 bài lý thuyết • 300 câu hỏi',           icon: <BookOpen />,      gradient: 'from-blue-600 to-indigo-700',   tags: ['Cấu trúc câu', 'Thì', 'Câu điều kiện', 'Bị động'] },
+  { id: 'listening', title: 'Listening', vi: 'Nghe – trả lời & chép chính tả',            icon: <Headphones />,    gradient: 'from-sky-500 to-blue-700',       tags: ['CEFR A1–C2', 'Phát audio', 'Dictation'] },
+  { id: 'speaking',  title: 'Speaking',  vi: 'Đọc theo mẫu, chấm phát âm',                icon: <Mic />,           gradient: 'from-rose-500 to-pink-700',      tags: ['CEFR A1–C2', 'Nhận diện giọng nói'] },
+  { id: 'reading',   title: 'Reading',   vi: 'Đọc hiểu – trắc nghiệm theo cấp độ',        icon: <BookOpenCheck />, gradient: 'from-emerald-500 to-teal-700',   tags: ['CEFR A1–C2', 'Trắc nghiệm'] },
+  { id: 'writing',   title: 'Writing',   vi: 'Viết luận, chấm sơ bộ + bài mẫu',           icon: <PenLine />,       gradient: 'from-amber-500 to-orange-700',   tags: ['CEFR A1–C2', 'Chấm tức thì'] }
 ]
 
 // ============================================================
 // App
 // ============================================================
 export default function App() {
-  const [view, setView] = useState('home'), [lessonId, setLessonId] = useState(1)
+  const [view, setView] = useState('home')
+  const [lessonId, setLessonId] = useState(1)
   const [answers, setAnswers] = useState(() => read('eg-answers', {}))
   const [history, setHistory] = useState(() => read('eg-history', []))
   const [session, setSession] = useState(() => read('eg-session', null))
@@ -128,18 +116,35 @@ export default function App() {
   useEffect(() => { session ? save('eg-session', session) : localStorage.removeItem('eg-session') }, [session])
 
   useEffect(() => {
-    const on = () => setOnline(true), off = () => setOnline(false)
-    window.addEventListener('online', on); window.addEventListener('offline', off)
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off) }
+    const on = () => setOnline(true)
+    const off = () => setOnline(false)
+    window.addEventListener('online', on)
+    window.addEventListener('offline', off)
+    return () => {
+      window.removeEventListener('online', on)
+      window.removeEventListener('offline', off)
+    }
   }, [])
 
+  // Load nội dung từ localStorage cache (offline)
   useEffect(() => {
-    setSkillProgress(p => ({
-      listening: { total: SKILL_TOTALS.listening, done: 0, items: {}, ...p.listening },
-      speaking:  { total: SKILL_TOTALS.speaking,  done: 0, items: {}, ...p.speaking  },
-      reading:   { total: SKILL_TOTALS.reading,   done: 0, items: {}, ...p.reading   },
-      writing:   { total: SKILL_TOTALS.writing,   done: 0, items: {}, ...p.writing   }
-    }))
+    try {
+      const cached = JSON.parse(localStorage.getItem('eg-content') || 'null')
+      if (cached) setContentStore(cached)
+    } catch {}
+  }, [])
+
+  // Load nội dung mới nhất từ Supabase (ghi đè cache)
+  useEffect(() => {
+    if (!supabase) return
+    loadContentFromSupabase(supabase)
+      .then(data => {
+        if (data) {
+          setContentStore(data)
+          try { localStorage.setItem('eg-content', JSON.stringify(data)) } catch {}
+        }
+      })
+      .catch(err => console.warn('[content] load failed:', err.message))
   }, [])
 
   useEffect(() => {
@@ -199,6 +204,8 @@ export default function App() {
   const correct = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer === v).length
 
   const go = v => { setView(v); setMenu(false); window.scrollTo(0, 0) }
+
+  const isSuperAdmin = !!(user?.email && SUPERADMIN_EMAILS.includes(user.email.toLowerCase()))
 
   const startQuiz = (lessonNumber, mode = 'practice', ids = null) => {
     const pool = ids?.length ? ids : QUESTIONS.filter(q => q.lesson === lessonNumber).map(q => q.id)
@@ -284,22 +291,38 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 text-slate-900 md:pb-0">
-      <Header user={user} displayName={displayName} syncing={syncing} syncStatus={syncStatus}
-        online={online} logout={logout} go={go} menu={menu} setMenu={setMenu} />
+      <Header
+        user={user}
+        displayName={displayName}
+        syncing={syncing}
+        syncStatus={syncStatus}
+        online={online}
+        logout={logout}
+        go={go}
+        menu={menu}
+        setMenu={setMenu}
+        isSuperAdmin={isSuperAdmin}
+      />
 
       <main className="mx-auto max-w-7xl px-4 py-8">
         {view === 'home' && (
           <HomePage
-            done={done} correct={correct} session={session}
-            continueQuiz={continueQuiz} startQuiz={startQuiz}
-            go={go} history={history} skillProgress={skillProgress}
+            done={done}
+            correct={correct}
+            session={session}
+            continueQuiz={continueQuiz}
+            startQuiz={startQuiz}
+            go={go}
+            history={history}
+            skillProgress={skillProgress}
             answers={answers}
           />
         )}
 
         {view === 'grammar' && (
           <GrammarPage
-            answers={answers} history={history}
+            answers={answers}
+            history={history}
             openLesson={id => { setLessonId(id); go('lesson') }}
             practice={id => startQuiz(id, 'practice')}
             exam={id => startQuiz(id, 'exam')}
@@ -308,39 +331,81 @@ export default function App() {
         )}
 
         {view === 'lesson' && lesson && (
-          <LessonPage lesson={lesson} go={go}
+          <LessonPage
+            lesson={lesson}
+            go={go}
             practice={() => startQuiz(lesson.id, 'practice')}
-            exam={() => startQuiz(lesson.id, 'exam')} />
+            exam={() => startQuiz(lesson.id, 'exam')}
+          />
         )}
 
         {view === 'quiz' && session && current && (
-          <QuizPage session={session} questions={sessionQuestions} current={current} choice={currentChoice}
-            selectChoice={selectChoice} checkCurrent={checkCurrent} move={move} jump={jump}
-            finish={finishQuiz} quit={quitQuiz} />
+          <QuizPage
+            session={session}
+            questions={sessionQuestions}
+            current={current}
+            choice={currentChoice}
+            selectChoice={selectChoice}
+            checkCurrent={checkCurrent}
+            move={move}
+            jump={jump}
+            finish={finishQuiz}
+            quit={quitQuiz}
+          />
         )}
 
         {view === 'result' && session?.result && (
-          <ResultPage attempt={session.result} questions={sessionQuestions}
-            startQuiz={startQuiz} clear={clearSession} go={go} />
+          <ResultPage
+            attempt={session.result}
+            questions={sessionQuestions}
+            startQuiz={startQuiz}
+            clear={clearSession}
+            go={go}
+          />
         )}
 
         {view === 'progress' && <ProgressPage answers={answers} history={history} startQuiz={startQuiz} go={go} />}
 
         {view === 'auth' && (
-          <AuthPage authMode={authMode} setAuthMode={setAuthMode} email={email} setEmail={setEmail}
-            password={password} setPassword={setPassword}
-            confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
-            displayName={displayName} setDisplayName={setDisplayName}
-            notice={notice} auth={auth} forgotPassword={forgotPassword}
-            showPassword={showPassword} setShowPassword={setShowPassword}
-            recovery={recovery} newPassword={newPassword} setNewPassword={setNewPassword}
-            updatePassword={updatePassword} />
+          <AuthPage
+            authMode={authMode}
+            setAuthMode={setAuthMode}
+            email={email}
+            setEmail={setEmail}
+            password={password}
+            setPassword={setPassword}
+            confirmPassword={confirmPassword}
+            setConfirmPassword={setConfirmPassword}
+            displayName={displayName}
+            setDisplayName={setDisplayName}
+            notice={notice}
+            auth={auth}
+            forgotPassword={forgotPassword}
+            showPassword={showPassword}
+            setShowPassword={setShowPassword}
+            recovery={recovery}
+            newPassword={newPassword}
+            setNewPassword={setNewPassword}
+            updatePassword={updatePassword}
+          />
+        )}
+
+        {view === 'admin' && isSuperAdmin && (
+          <AdminPanel user={user} supabase={supabase} onBack={() => go('home')} />
         )}
 
         {view === 'profile' && user && (
-          <ProfilePage user={user} displayName={displayName} setDisplayName={setDisplayName}
-            notice={notice} saveProfile={saveProfile} syncStatus={syncStatus}
-            online={online} syncNow={syncNow} logout={logout} />
+          <ProfilePage
+            user={user}
+            displayName={displayName}
+            setDisplayName={setDisplayName}
+            notice={notice}
+            saveProfile={saveProfile}
+            syncStatus={syncStatus}
+            online={online}
+            syncNow={syncNow}
+            logout={logout}
+          />
         )}
 
         {view === 'listening' && <Listening onBack={() => go('home')} onComplete={(id, s) => markSkill('listening', id, s)} />}
@@ -357,7 +422,7 @@ export default function App() {
 // ============================================================
 // Header
 // ============================================================
-function Header({ user, displayName, syncing, syncStatus, online, logout, go, menu, setMenu }) {
+function Header({ user, displayName, syncing, syncStatus, online, logout, go, menu, setMenu, isSuperAdmin }) {
   const syncLabel = !online ? 'Ngoại tuyến'
     : syncing || syncStatus === 'syncing' ? 'Đang đồng bộ'
     : syncStatus === 'error' ? 'Lỗi đồng bộ'
@@ -386,12 +451,25 @@ function Header({ user, displayName, syncing, syncStatus, online, logout, go, me
           <span className={`hidden items-center gap-1 text-xs xl:flex ${syncStatus === 'error' ? 'text-red-600' : 'text-slate-400'}`}>
             {online ? <Cloud className="h-4 w-4" /> : <CloudOff className="h-4 w-4" />}{syncLabel}
           </span>
+
+          {isSuperAdmin && (
+            <button
+              onClick={() => go('admin')}
+              className="hidden items-center gap-1.5 rounded-xl bg-red-100 px-3 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-200 md:flex"
+            >
+              <ShieldCheck className="h-4 w-4" /> Admin
+            </button>
+          )}
+
           {user
-            ? <button className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium transition hover:bg-slate-200 md:block"
-                onClick={() => go('profile')}>
+            ? <button
+                className="hidden max-w-40 truncate rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium transition hover:bg-slate-200 md:block"
+                onClick={() => go('profile')}
+              >
                 {displayName || user.email}
               </button>
             : <Btn onClick={() => go('auth')}><LogIn className="mr-2 inline h-4 w-4" />Đăng nhập</Btn>}
+
           <button className="rounded-lg p-2 lg:hidden" onClick={() => setMenu(!menu)} aria-label="Mở menu"><Menu /></button>
         </div>
       </div>
@@ -405,6 +483,13 @@ function Header({ user, displayName, syncing, syncStatus, online, logout, go, me
           <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('reading')}>📖 Reading</button>
           <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('writing')}>✍️ Writing</button>
           <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('progress')}>📊 Kết quả</button>
+
+          {isSuperAdmin && (
+            <button className="rounded-lg p-3 text-left font-semibold text-red-600 hover:bg-red-50" onClick={() => go('admin')}>
+              🛡️ Admin Panel
+            </button>
+          )}
+
           {user
             ? <>
                 <button className="rounded-lg p-3 text-left hover:bg-slate-50" onClick={() => go('profile')}>👤 Tài khoản</button>
@@ -426,17 +511,16 @@ function NavButton({ icon, children, ...p }) {
 }
 
 // ============================================================
-// Home — 5 card lớn ngay dưới hero
+// Home
 // ============================================================
 function HomePage({ done, correct, session, continueQuiz, startQuiz, go, history, skillProgress, answers }) {
   const last = history[0]
   return (
     <div className="space-y-8">
-      {/* HERO */}
       <section className="grid gap-8 rounded-3xl bg-gradient-to-br from-blue-700 to-indigo-900 p-8 text-white shadow-xl md:grid-cols-2 md:p-12">
         <div>
           <span className="rounded-full bg-white/15 px-3 py-1 text-sm font-medium">
-            13 bài ngữ pháp • 300 câu • 4 kỹ năng
+            13 bài ngữ pháp • 300 câu • 4 kỹ năng CEFR A1–C2
           </span>
           <h1 className="mt-4 text-4xl font-black leading-tight md:text-6xl">
             Học rõ.<br />Luyện thật.<br />Nhớ lâu.
@@ -475,7 +559,6 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, go, history
         </Card>
       </section>
 
-      {/* 5 LỐI VÀO – ĐẶT NGAY DƯỚI HERO */}
       <section>
         <div className="mb-6">
           <h2 className="text-2xl font-black md:text-3xl">Chọn bài để bắt đầu</h2>
@@ -532,7 +615,6 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, go, history
         </div>
       </section>
 
-      {/* CONTINUE */}
       {session && !session.completed && (
         <Card className="border-blue-200 bg-blue-50 p-5">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -548,20 +630,22 @@ function HomePage({ done, correct, session, continueQuiz, startQuiz, go, history
         </Card>
       )}
 
-      {/* STATS */}
       <div className="grid gap-4 md:grid-cols-3">
         <Stat icon={<ListChecks />} title="Câu đã làm" value={`${done}/300`} />
         <Stat icon={<CheckCircle2 />} title="Đáp án đúng" value={correct} />
-        <Stat icon={<History />} title="Lượt gần nhất"
+        <Stat
+          icon={<History />}
+          title="Lượt gần nhất"
           value={last ? `${last.score}/${last.total}` : 'Chưa có'}
-          note={last && lessonName(last.lesson)} />
+          note={last && lessonName(last.lesson)}
+        />
       </div>
     </div>
   )
 }
 
 // ============================================================
-// Grammar page — 13 bài
+// Grammar
 // ============================================================
 function GrammarPage({ answers, history, openLesson, practice, exam, go }) {
   return (
@@ -583,9 +667,6 @@ function GrammarPage({ answers, history, openLesson, practice, exam, go }) {
   )
 }
 
-// ============================================================
-// Lesson grid + Lesson page
-// ============================================================
 function LessonGrid({ open, practice, exam, history = [], answers = {} }) {
   return (
     <section>
@@ -599,7 +680,9 @@ function LessonGrid({ open, practice, exam, history = [], answers = {} }) {
           return (
             <Card key={l.id} className="p-5 transition hover:shadow-md">
               <div className="flex justify-between">
-                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-100 font-black text-blue-700 tabular-nums">{l.id}</div>
+                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-100 font-black text-blue-700 tabular-nums">
+                  {l.id}
+                </div>
                 {best && (
                   <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 tabular-nums">
                     Cao nhất {best.score}/{best.total}
@@ -630,32 +713,140 @@ function LessonGrid({ open, practice, exam, history = [], answers = {} }) {
 function LessonPage({ lesson, go, practice, exam }) {
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="rounded-3xl bg-blue-700 p-7 text-white shadow-lg">
+      <div className="rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-800 p-7 text-white shadow-lg">
         <div className="text-white/80">Bài {lesson.id}/13</div>
         <h1 className="mt-2 text-3xl font-black">{lesson.title}</h1>
         <p className="mt-2 text-blue-100">{lesson.short}</p>
+
+        {lesson.objectives && (
+          <div className="mt-5 rounded-2xl bg-white/10 p-4 backdrop-blur">
+            <div className="text-xs font-bold uppercase tracking-wider text-white/70">Mục tiêu bài học</div>
+            <ul className="mt-2 space-y-1 text-sm">
+              {lesson.objectives.map((o, i) => (
+                <li key={i} className="flex gap-2">
+                  <span className="text-emerald-300">✓</span>
+                  <span>{o}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
+
       <div className="mt-6 space-y-4">
         {lesson.sections.map((s, i) => (
           <Card key={i} className="p-6">
             <div className="flex items-start gap-4">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-100 font-bold text-blue-700 tabular-nums">{i + 1}</span>
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-blue-100 font-bold text-blue-700 tabular-nums">
+                {i + 1}
+              </span>
               <div className="min-w-0">
                 <h2 className="text-xl font-bold">{s.heading}</h2>
                 <p className="mt-2 leading-7 text-slate-700">{s.text}</p>
                 {s.formula && (
-                  <div className="mt-4 rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4 font-mono font-bold text-amber-950">{s.formula}</div>
+                  <div className="mt-4 rounded-xl border-l-4 border-amber-400 bg-amber-50 p-4 font-mono font-bold text-amber-950">
+                    {s.formula}
+                  </div>
                 )}
                 {s.example && (
-                  <div className="mt-3 rounded-xl bg-blue-50 p-4 text-blue-900"><strong>Ví dụ: </strong>{s.example}</div>
+                  <div className="mt-3 rounded-xl bg-blue-50 p-4 text-blue-900">
+                    <strong>Ví dụ: </strong>{s.example}
+                  </div>
                 )}
               </div>
             </div>
           </Card>
         ))}
       </div>
-      <div className="mt-6 flex flex-wrap justify-between gap-3">
-        <Btn variant="ghost" onClick={() => go('grammar')}>Danh sách bài</Btn>
+
+      {lesson.vocabulary?.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
+            <span className="rounded-xl bg-emerald-100 p-2 text-emerald-700">📚</span>
+            Từ vựng chủ đề
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {lesson.vocabulary.map((v, i) => (
+              <Card key={i} className="p-4">
+                <div className="flex items-baseline justify-between gap-2">
+                  <strong className="text-lg text-emerald-700">{v.word}</strong>
+                  <span className="text-xs font-mono text-slate-400">{v.ipa}</span>
+                </div>
+                <div className="mt-1 text-sm font-medium text-slate-700">{v.meaning}</div>
+                <div className="mt-2 text-sm italic text-slate-500">“{v.example}”</div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {lesson.commonMistakes?.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
+            <span className="rounded-xl bg-red-100 p-2 text-red-700">⚠️</span>
+            Lỗi người Việt hay mắc
+          </h2>
+          <div className="space-y-3">
+            {lesson.commonMistakes.map((m, i) => (
+              <Card key={i} className="overflow-hidden">
+                <div className="grid sm:grid-cols-2">
+                  <div className="border-b border-red-100 bg-red-50 p-4 sm:border-b-0 sm:border-r">
+                    <div className="text-xs font-bold uppercase tracking-wider text-red-600">❌ Sai</div>
+                    <div className="mt-1 font-medium text-red-900 line-through">{m.wrong}</div>
+                  </div>
+                  <div className="bg-emerald-50 p-4">
+                    <div className="text-xs font-bold uppercase tracking-wider text-emerald-600">✓ Đúng</div>
+                    <div className="mt-1 font-medium text-emerald-900">{m.right}</div>
+                  </div>
+                </div>
+                <div className="border-t border-slate-100 bg-white p-3 text-sm text-slate-600">
+                  <strong>Vì sao:</strong> {m.why}
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {lesson.tips?.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
+            <span className="rounded-xl bg-amber-100 p-2 text-amber-700">💡</span>
+            Mẹo ghi nhớ
+          </h2>
+          <Card className="p-5">
+            <ul className="space-y-3">
+              {lesson.tips.map((t, i) => (
+                <li key={i} className="flex gap-3 text-slate-700">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-200 text-xs font-bold text-amber-800">
+                    {i + 1}
+                  </span>
+                  <span className="leading-7">{t}</span>
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </section>
+      )}
+
+      {lesson.realLife?.length > 0 && (
+        <section className="mt-6">
+          <h2 className="mb-4 flex items-center gap-2 text-2xl font-black">
+            <span className="rounded-xl bg-blue-100 p-2 text-blue-700">🌱</span>
+            Ứng dụng thực tế
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {lesson.realLife.map((r, i) => (
+              <Card key={i} className="border-l-4 border-l-blue-500 p-4">
+                <div className="text-sm text-slate-700">{r}</div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <div className="mt-8 flex flex-wrap justify-between gap-3">
+        <Btn variant="ghost" onClick={() => go('grammar')}>← Danh sách bài</Btn>
         <div className="flex gap-2">
           <Btn variant="ghost" onClick={exam}>Kiểm tra</Btn>
           <Btn onClick={practice}>Luyện tập có giải thích</Btn>
@@ -677,7 +868,9 @@ function QuizPage({ session, questions, current, choice, selectChoice, checkCurr
     <div className="mx-auto max-w-5xl">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm text-slate-500">{lessonName(session.lesson)} • {isPractice ? 'Luyện tập' : 'Kiểm tra'}</div>
+          <div className="text-sm text-slate-500">
+            {lessonName(session.lesson)} • {isPractice ? 'Luyện tập' : 'Kiểm tra'}
+          </div>
           <h1 className="text-2xl font-black tabular-nums">Câu {session.index + 1}/{questions.length}</h1>
         </div>
         <Btn variant="ghost" onClick={quit}><X className="mr-2 inline h-4 w-4" />Thoát</Btn>
@@ -702,7 +895,9 @@ function QuizPage({ session, questions, current, choice, selectChoice, checkCurr
                     : chosen ? 'border-blue-600 bg-blue-50'
                     : 'border-slate-200 hover:border-blue-300'
                   }`}>
-                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border font-semibold">{String.fromCharCode(65 + i)}</span>
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border font-semibold">
+                    {String.fromCharCode(65 + i)}
+                  </span>
                   <span>{x}</span>
                   {isPractice && checked && right && <CheckCircle2 className="ml-auto text-emerald-600" />}
                   {isPractice && checked && chosen && !right && <XCircle className="ml-auto text-red-600" />}
@@ -738,7 +933,9 @@ function QuestionNavigator({ questions, session, jump, finish }) {
     <Card className="h-fit p-4 lg:sticky lg:top-24">
       <div className="flex items-center justify-between">
         <h3 className="font-bold">Danh sách câu</h3>
-        <span className="text-sm text-slate-500 tabular-nums">{Object.keys(session.responses || {}).length}/{questions.length}</span>
+        <span className="text-sm text-slate-500 tabular-nums">
+          {Object.keys(session.responses || {}).length}/{questions.length}
+        </span>
       </div>
       <div className="mt-4 grid grid-cols-5 gap-2">
         {questions.map((q, i) => {
@@ -827,7 +1024,10 @@ function ResultPage({ attempt, questions, startQuiz, clear, go }) {
 function ProgressPage({ answers, history, startQuiz }) {
   const done = Object.keys(answers).length
   const correct = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer === v).length
-  const wrongIds = Object.entries(answers).filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer !== v).map(([id]) => +id)
+  const wrongIds = Object.entries(answers)
+    .filter(([id, v]) => QUESTIONS.find(q => q.id === +id)?.answer !== v)
+    .map(([id]) => +id)
+
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -905,11 +1105,19 @@ function AuthPage({
   if (recovery) return (
     <div className="mx-auto max-w-md py-10">
       <Card className="p-6">
-        <div className="flex items-center gap-3"><KeyRound className="text-blue-600" /><h1 className="text-2xl font-black">Đặt mật khẩu mới</h1></div>
+        <div className="flex items-center gap-3">
+          <KeyRound className="text-blue-600" />
+          <h1 className="text-2xl font-black">Đặt mật khẩu mới</h1>
+        </div>
         <div className="relative mt-5">
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
-            type={showPassword ? 'text' : 'password'} minLength="6" placeholder="Mật khẩu mới"
-            value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          <input
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
+            type={showPassword ? 'text' : 'password'}
+            minLength="6"
+            placeholder="Mật khẩu mới"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+          />
           <button className="absolute right-3 top-3 text-slate-400" onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff /> : <Eye />}
           </button>
@@ -929,23 +1137,35 @@ function AuthPage({
         </div>
         <form onSubmit={auth} className="mt-5 space-y-4">
           {authMode === 'signup' && (
-            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-              required placeholder="Tên hiển thị" value={displayName} onChange={e => setDisplayName(e.target.value)} />
+            <input
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+              required placeholder="Tên hiển thị" value={displayName}
+              onChange={e => setDisplayName(e.target.value)}
+            />
           )}
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-            type="email" required placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} />
+          <input
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+            type="email" required placeholder="Email" value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
           <div className="relative">
-            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
-              type={showPassword ? 'text' : 'password'} minLength="6" required placeholder="Mật khẩu"
-              value={password} onChange={e => setPassword(e.target.value)} />
+            <input
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-500"
+              type={showPassword ? 'text' : 'password'}
+              minLength="6" required placeholder="Mật khẩu" value={password}
+              onChange={e => setPassword(e.target.value)}
+            />
             <button type="button" className="absolute right-3 top-3 text-slate-400" onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <EyeOff /> : <Eye />}
             </button>
           </div>
           {authMode === 'signup' && (
-            <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-              type={showPassword ? 'text' : 'password'} minLength="6" required placeholder="Nhập lại mật khẩu"
-              value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+            <input
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+              type={showPassword ? 'text' : 'password'}
+              minLength="6" required placeholder="Nhập lại mật khẩu" value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
+            />
           )}
           <Btn className="w-full" type="submit">
             {authMode === 'login'
@@ -954,11 +1174,15 @@ function AuthPage({
           </Btn>
         </form>
         {authMode === 'login' && (
-          <button className="mt-4 text-sm font-medium text-blue-600 hover:underline" onClick={forgotPassword}>Quên mật khẩu?</button>
+          <button className="mt-4 text-sm font-medium text-blue-600 hover:underline" onClick={forgotPassword}>
+            Quên mật khẩu?
+          </button>
         )}
         {notice && <p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm text-blue-800">{notice}</p>}
-        <button className="mt-5 text-sm font-medium text-blue-600 hover:underline"
-          onClick={() => setAuthMode(x => x === 'login' ? 'signup' : 'login')}>
+        <button
+          className="mt-5 text-sm font-medium text-blue-600 hover:underline"
+          onClick={() => setAuthMode(x => x === 'login' ? 'signup' : 'login')}
+        >
           {authMode === 'login' ? 'Chưa có tài khoản? Đăng ký' : 'Đã có tài khoản? Đăng nhập'}
         </button>
       </Card>
@@ -983,8 +1207,10 @@ function ProfilePage({ user, displayName, setDisplayName, notice, saveProfile, s
         <Card className="p-6">
           <h2 className="text-xl font-bold">Hồ sơ</h2>
           <label className="mt-4 block text-sm font-medium">Tên hiển thị</label>
-          <input className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
-            value={displayName} onChange={e => setDisplayName(e.target.value)} />
+          <input
+            className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
+            value={displayName} onChange={e => setDisplayName(e.target.value)}
+          />
           <Btn className="mt-4 w-full" onClick={saveProfile}>
             <Save className="mr-2 inline h-4 w-4" />Lưu hồ sơ
           </Btn>

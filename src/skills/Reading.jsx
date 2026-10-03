@@ -1,23 +1,50 @@
-import { useState } from 'react'
-import { ArrowLeft, CheckCircle2, XCircle, BookOpenCheck } from 'lucide-react'
-import { READING } from './data'
+import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle2, XCircle, BookOpenCheck, ChevronLeft } from 'lucide-react'
+import { getCefrMeta, getLevelText } from './config'
+import { filterByCefr } from './data'
+import { useContent } from './contentStore'
+import LevelPicker from './LevelPicker'
 
 export default function Reading({ onComplete, onBack }) {
+  const content = useContent()
+  const ALL_ITEMS = content.reading || []
+
+  const [selectedLevel, setSelectedLevel] = useState(null)
   const [idx, setIdx] = useState(0)
   const [resp, setResp] = useState({})
   const [checked, setChecked] = useState(false)
-  const item = READING[idx]
+
+  const items = useMemo(
+    () => selectedLevel ? filterByCefr(ALL_ITEMS, selectedLevel) : [],
+    [selectedLevel, ALL_ITEMS]
+  )
+
+  const item = items[idx]
+
+  useEffect(() => { setIdx(0); setResp({}); setChecked(false) }, [selectedLevel])
+
+  if (!selectedLevel) {
+    return (
+      <LevelPicker
+        skillId="reading"
+        items={ALL_ITEMS}
+        onPick={lvl => setSelectedLevel(lvl)}
+        onBack={onBack}
+      />
+    )
+  }
+
+  if (!item) return null
+  const meta = getCefrMeta(selectedLevel)
 
   const reset = () => { setResp({}); setChecked(false) }
   const next = () => {
     reset()
-    if (idx < READING.length - 1) setIdx(i => i + 1)
-    else onBack()
+    if (idx < items.length - 1) setIdx(i => i + 1)
+    else setSelectedLevel(null)
   }
-  const prev = () => {
-    reset()
-    setIdx(i => Math.max(0, i - 1))
-  }
+  const prev = () => { reset(); setIdx(i => Math.max(0, i - 1)) }
+
   const score = item.questions.reduce((s, q, i) => s + (resp[i] === q.answer ? 1 : 0), 0)
 
   const submit = () => {
@@ -28,10 +55,18 @@ export default function Reading({ onComplete, onBack }) {
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Quay lại
+        <button
+          onClick={() => { setSelectedLevel(null); setIdx(0); reset() }}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900"
+        >
+          <ChevronLeft className="h-4 w-4" /> Chọn cấp độ khác
         </button>
-        <div className="text-sm text-slate-500">Bài {idx + 1}/{READING.length} · {item.level}</div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className={`rounded-full bg-gradient-to-r ${meta.color} px-2.5 py-0.5 text-xs font-bold text-white`}>
+            {meta.id}
+          </span>
+          <span className="text-slate-500">Bài {idx + 1}/{items.length} · {getLevelText(item.cefr)}</span>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -78,18 +113,26 @@ export default function Reading({ onComplete, onBack }) {
         ))}
 
         <div className="flex flex-wrap justify-between gap-2">
-          <button onClick={prev} disabled={idx === 0}
-            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45">
+          <button
+            onClick={prev}
+            disabled={idx === 0}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45"
+          >
             Bài trước
           </button>
           {!checked
-            ? <button onClick={submit} disabled={Object.keys(resp).length < item.questions.length}
-                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-45">
+            ? <button
+                onClick={submit}
+                disabled={Object.keys(resp).length < item.questions.length}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700 disabled:opacity-45"
+              >
                 Chấm điểm
               </button>
-            : <button onClick={next}
-                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
-                {idx < READING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+            : <button
+                onClick={next}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700"
+              >
+                {idx < items.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
               </button>}
         </div>
 

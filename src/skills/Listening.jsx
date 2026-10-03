@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle2, XCircle, Gauge } from 'lucide-react'
-import { LISTENING } from './data'
+import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle2, XCircle, Gauge, ChevronLeft } from 'lucide-react'
+import { getCefrMeta, getLevelText } from './config'
+import { filterByCefr } from './data'
+import { useContent } from './contentStore'
+import LevelPicker from './LevelPicker'
 import { stopSpeaking, speechSupported, wordOverlap } from './utils'
 
 const Btn = ({ children, variant = 'primary', className = '', ...p }) => (
@@ -15,6 +18,10 @@ const Btn = ({ children, variant = 'primary', className = '', ...p }) => (
 )
 
 export default function Listening({ onComplete, onBack }) {
+  const content = useContent()
+  const ALL_ITEMS = content.listening || []
+
+  const [selectedLevel, setSelectedLevel] = useState(null)
   const [mode, setMode] = useState('comprehension')
   const [idx, setIdx] = useState(0)
   const [rate, setRate] = useState(0.9)
@@ -23,10 +30,34 @@ export default function Listening({ onComplete, onBack }) {
   const [checked, setChecked] = useState(false)
   const [dictation, setDictation] = useState('')
   const [dictResult, setDictResult] = useState(null)
-  const item = LISTENING[idx]
+
   const synthOK = useMemo(() => speechSupported(), [])
 
+  const items = useMemo(
+    () => selectedLevel ? filterByCefr(ALL_ITEMS, selectedLevel) : [],
+    [selectedLevel, ALL_ITEMS]
+  )
+
+  const item = items[idx]
+
   useEffect(() => () => stopSpeaking(), [])
+  useEffect(() => {
+    setIdx(0); setResp({}); setChecked(false); setDictation(''); setDictResult(null)
+  }, [selectedLevel])
+
+  if (!selectedLevel) {
+    return (
+      <LevelPicker
+        skillId="listening"
+        items={ALL_ITEMS}
+        onPick={lvl => setSelectedLevel(lvl)}
+        onBack={onBack}
+      />
+    )
+  }
+
+  if (!item) return null
+  const meta = getCefrMeta(selectedLevel)
 
   const play = () => {
     if (!synthOK) return
@@ -44,11 +75,12 @@ export default function Listening({ onComplete, onBack }) {
   }
 
   const stop = () => { stopSpeaking(); setPlaying(false) }
-
-  const reset = () => {
-    setResp({}); setChecked(false); setDictation(''); setDictResult(null)
+  const reset = () => { setResp({}); setChecked(false); setDictation(''); setDictResult(null) }
+  const next = () => {
+    reset()
+    if (idx < items.length - 1) setIdx(i => i + 1)
+    else setSelectedLevel(null)
   }
-  const next = () => { reset(); setIdx(i => Math.min(LISTENING.length - 1, i + 1)) }
   const prev = () => { reset(); setIdx(i => Math.max(0, i - 1)) }
 
   const submit = () => {
@@ -69,23 +101,29 @@ export default function Listening({ onComplete, onBack }) {
       const pct = Math.round(score / item.questions.length * 100)
       onComplete?.(item.id, pct)
     }
-    if (idx < LISTENING.length - 1) next()
-    else onBack()
+    next()
   }
 
   return (
     <div className="mx-auto max-w-4xl space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Quay lại
+        <button
+          onClick={() => { stop(); setSelectedLevel(null); setIdx(0); reset() }}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900"
+        >
+          <ChevronLeft className="h-4 w-4" /> Chọn cấp độ khác
         </button>
         <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
-          <button onClick={() => { setMode('comprehension'); reset() }}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'comprehension' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}>
+          <button
+            onClick={() => { setMode('comprehension'); reset() }}
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'comprehension' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}
+          >
             Nghe – trả lời
           </button>
-          <button onClick={() => { setMode('dictation'); reset() }}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'dictation' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}>
+          <button
+            onClick={() => { setMode('dictation'); reset() }}
+            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${mode === 'dictation' ? 'bg-white shadow text-blue-700' : 'text-slate-600'}`}
+          >
             Chép chính tả
           </button>
         </div>
@@ -94,13 +132,24 @@ export default function Listening({ onComplete, onBack }) {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="text-sm text-slate-500">Bài {idx + 1}/{LISTENING.length} · {item.level}</div>
-            <h1 className="text-2xl font-bold">{item.title}</h1>
+            <div className="flex items-center gap-2 text-sm">
+              <span className={`rounded-full bg-gradient-to-r ${meta.color} px-2.5 py-0.5 text-xs font-bold text-white`}>
+                {meta.id}
+              </span>
+              <span className="text-slate-500">
+                Bài {idx + 1}/{items.length} · {getLevelText(item.cefr)}
+              </span>
+            </div>
+            <h1 className="mt-2 text-2xl font-bold">{item.title}</h1>
           </div>
           <div className="flex items-center gap-2">
             <Gauge className="h-4 w-4 text-slate-400" />
-            <input type="range" min="0.6" max="1.2" step="0.05" value={rate}
-              onChange={e => setRate(parseFloat(e.target.value))} className="w-28" />
+            <input
+              type="range" min="0.6" max="1.2" step="0.05"
+              value={rate}
+              onChange={e => setRate(parseFloat(e.target.value))}
+              className="w-28"
+            />
             <span className="text-sm text-slate-500">{rate.toFixed(2)}x</span>
           </div>
         </div>
@@ -162,7 +211,7 @@ export default function Listening({ onComplete, onBack }) {
             <div className="flex gap-2">
               {!checked
                 ? <Btn onClick={submit} disabled={Object.keys(resp).length < item.questions.length}>Chấm điểm</Btn>
-                : <Btn onClick={finish}>{idx < LISTENING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}</Btn>}
+                : <Btn onClick={finish}>{idx < items.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}</Btn>}
             </div>
           </div>
           {checked && (
@@ -180,16 +229,20 @@ export default function Listening({ onComplete, onBack }) {
       {mode === 'dictation' && (
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-slate-600">Nghe và gõ lại chính xác câu bạn nghe được.</p>
-          <textarea rows="3" value={dictation} onChange={e => setDictation(e.target.value)}
+          <textarea
+            rows="3"
+            value={dictation}
+            onChange={e => setDictation(e.target.value)}
             className="w-full rounded-xl border border-slate-300 p-3 font-mono text-sm"
-            placeholder="Type what you hear..." />
+            placeholder="Type what you hear..."
+          />
           <div className="flex flex-wrap justify-between gap-2">
             <Btn variant="ghost" onClick={prev} disabled={idx === 0}>Bài trước</Btn>
             <div className="flex gap-2">
               <Btn onClick={submit} disabled={!dictation.trim()}>Chấm điểm</Btn>
               {dictResult && (
                 <Btn onClick={finish}>
-                  {idx < LISTENING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+                  {idx < items.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
                 </Btn>
               )}
             </div>

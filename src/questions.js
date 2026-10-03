@@ -1,486 +1,500 @@
 export const LESSONS = [
   {
-    "id": 1,
-    "title": "Cấu trúc câu cơ bản",
-    "short": "S + V, S + V + O và động từ be",
-    "sections": [
-      {
-        "heading": "1. Câu hoàn chỉnh",
-        "text": "Câu tiếng Anh thường cần chủ ngữ và động từ. Chủ ngữ cho biết ai hoặc cái gì; động từ cho biết hành động hoặc trạng thái.",
-        "formula": "S + V",
-        "example": "The baby is sleeping. — Em bé đang ngủ."
-      },
-      {
-        "heading": "2. Tân ngữ",
-        "text": "Động từ như buy, need, call và open thường có tân ngữ. Hỏi “ai?” hoặc “cái gì?” sau động từ để tìm tân ngữ.",
-        "formula": "S + V + O",
-        "example": "Nam opened the door. — Nam mở cửa."
-      },
-      {
-        "heading": "3. Động từ be",
-        "text": "Dùng am/is/are trước tính từ, danh từ nghề nghiệp hoặc địa điểm. Không dùng do/does thay cho be.",
-        "formula": "S + be + adjective/noun/place",
-        "example": "My manager is busy. — Quản lý của tôi đang bận."
-      },
-      {
-        "heading": "4. Trật tự từ",
-        "text": "Vị trí dễ dùng là chủ ngữ, động từ, tân ngữ, địa điểm rồi thời gian. Thời gian có thể đưa lên đầu để nhấn mạnh.",
-        "formula": "S + V + O + Place + Time",
-        "example": "I met Lan at the office yesterday."
-      },
-      {
-        "heading": "Lỗi cần tránh",
-        "text": "Không bỏ be, không đặt am/is/are trước động từ nguyên mẫu, và không dịch nguyên trật tự tiếng Việt sang tiếng Anh.",
-        "formula": "",
-        "example": "Sai: I am work. Đúng: I work / I am working."
-      }
+    id: 1,
+    title: 'Cấu trúc câu cơ bản',
+    short: 'S + V, S + V + O và động từ be',
+    objectives: [
+      'Nhận diện được chủ ngữ (S) và động từ (V) trong câu',
+      'Phân biệt câu dùng động từ be với câu dùng động từ thường',
+      'Viết câu đúng trật tự S + V + O + Place + Time'
+    ],
+    sections: [
+      { heading: '1. Câu hoàn chỉnh', text: 'Câu tiếng Anh thường cần chủ ngữ và động từ. Chủ ngữ cho biết ai hoặc cái gì; động từ cho biết hành động hoặc trạng thái.', formula: 'S + V', example: 'The baby is sleeping. — Em bé đang ngủ.' },
+      { heading: '2. Tân ngữ', text: 'Động từ như buy, need, call và open thường có tân ngữ. Hỏi “ai?” hoặc “cái gì?” sau động từ để tìm tân ngữ.', formula: 'S + V + O', example: 'Nam opened the door. — Nam mở cửa.' },
+      { heading: '3. Động từ be', text: 'Dùng am/is/are trước tính từ, danh từ nghề nghiệp hoặc địa điểm. Không dùng do/does thay cho be.', formula: 'S + be + adjective/noun/place', example: 'My manager is busy. — Quản lý của tôi đang bận.' },
+      { heading: '4. Trật tự từ', text: 'Vị trí dễ dùng là chủ ngữ, động từ, tân ngữ, địa điểm rồi thời gian. Thời gian có thể đưa lên đầu để nhấn mạnh.', formula: 'S + V + O + Place + Time', example: 'I met Lan at the office yesterday.' },
+      { heading: '5. Lỗi cần tránh', text: 'Không bỏ be, không đặt am/is/are trước động từ nguyên mẫu, và không dịch nguyên trật tự tiếng Việt sang tiếng Anh.', formula: '', example: 'Sai: I am work. Đúng: I work / I am working.' }
+    ],
+    vocabulary: [
+      { word: 'subject', ipa: '/ˈsʌbdʒɪkt/', meaning: 'chủ ngữ', example: 'In “Nam works”, “Nam” is the subject.' },
+      { word: 'verb', ipa: '/vɜːb/', meaning: 'động từ', example: '“Works” is the verb in that sentence.' },
+      { word: 'object', ipa: '/ˈɒbdʒɪkt/', meaning: 'tân ngữ', example: '“The door” is the object in “He opened the door”.' },
+      { word: 'sentence', ipa: '/ˈsentəns/', meaning: 'câu', example: 'Write a full sentence, not a phrase.' },
+      { word: 'manager', ipa: '/ˈmænɪdʒə/', meaning: 'quản lý', example: 'My manager is busy today.' }
+    ],
+    commonMistakes: [
+      { wrong: 'My brother very tall.', right: 'My brother is very tall.', why: 'Tính từ cần động từ be, không đứng trơ sau chủ ngữ.' },
+      { wrong: 'I am work in Ha Noi.', right: 'I work in Ha Noi.', why: 'Không dùng be + động từ nguyên mẫu. Dùng V hoặc be + V-ing.' },
+      { wrong: 'He opened door.', right: 'He opened the door.', why: 'Danh từ đếm được số ít cần mạo từ a/an/the.' }
+    ],
+    tips: [
+      'Luôn tự hỏi “Ai? Làm gì?” để xác định S và V trước khi viết câu.',
+      'Nếu câu đã có am/is/are thì không dùng do/does để phủ định hay đặt câu hỏi.',
+      'Thời gian (yesterday, every day…) đứng cuối câu. Muốn nhấn mạnh thì đưa lên đầu + dấu phẩy.'
+    ],
+    realLife: [
+      'Nhắn tin: “I’m at the office now.” — Tôi đang ở văn phòng.',
+      'Mô tả người: “My sister is a nurse.” — Chị tôi là y tá.'
     ]
   },
   {
-    "id": 2,
-    "title": "Hiện tại đơn và hiện tại tiếp diễn",
-    "short": "Thói quen và hành động đang xảy ra",
-    "sections": [
-      {
-        "heading": "1. Hiện tại đơn",
-        "text": "Dùng cho thói quen, lịch trình, sự thật và tình trạng ổn định. Với he/she/it, động từ khẳng định thêm -s hoặc -es.",
-        "formula": "I/You/We/They + V; He/She/It + V-s/es",
-        "example": "She works in a bank."
-      },
-      {
-        "heading": "2. Phủ định và câu hỏi",
-        "text": "Dùng do/does. Sau does hoặc doesn’t, động từ trở về nguyên mẫu.",
-        "formula": "do/does + V",
-        "example": "Does Nam drive? / Nam doesn’t drive."
-      },
-      {
-        "heading": "3. Hiện tại tiếp diễn",
-        "text": "Dùng cho việc đang diễn ra hoặc tình huống tạm thời trong giai đoạn hiện tại.",
-        "formula": "S + am/is/are + V-ing",
-        "example": "I am working from home this week."
-      },
-      {
-        "heading": "4. Động từ trạng thái",
-        "text": "Know, understand, want, need, believe và belong thường không dùng ở dạng tiếp diễn.",
-        "formula": "",
-        "example": "I know the answer, không nói I am knowing."
-      },
-      {
-        "heading": "Cách chọn",
-        "text": "Hỏi: đây là thói quen hay việc đang diễn ra/tạm thời? Đừng chỉ săn từ khóa.",
-        "formula": "",
-        "example": "Every day → thường hiện tại đơn; right now → thường tiếp diễn."
-      }
+    id: 2,
+    title: 'Hiện tại đơn và hiện tại tiếp diễn',
+    short: 'Thói quen và hành động đang xảy ra',
+    objectives: [
+      'Phân biệt thói quen (hiện tại đơn) và hành động đang xảy ra (tiếp diễn)',
+      'Chia đúng động từ với he/she/it (thêm -s/-es)',
+      'Nhận biết các động từ trạng thái không dùng ở dạng tiếp diễn'
+    ],
+    sections: [
+      { heading: '1. Hiện tại đơn', text: 'Dùng cho thói quen, lịch trình, sự thật và tình trạng ổn định. Với he/she/it, động từ khẳng định thêm -s hoặc -es.', formula: 'I/You/We/They + V; He/She/It + V-s/es', example: 'She works in a bank.' },
+      { heading: '2. Phủ định và câu hỏi', text: 'Dùng do/does. Sau does hoặc doesn’t, động từ trở về nguyên mẫu.', formula: 'do/does + V', example: 'Does Nam drive? / Nam doesn’t drive.' },
+      { heading: '3. Hiện tại tiếp diễn', text: 'Dùng cho việc đang diễn ra hoặc tình huống tạm thời trong giai đoạn hiện tại.', formula: 'S + am/is/are + V-ing', example: 'I am working from home this week.' },
+      { heading: '4. Động từ trạng thái', text: 'Know, understand, want, need, believe và belong thường không dùng ở dạng tiếp diễn.', formula: '', example: 'I know the answer, không nói I am knowing.' },
+      { heading: '5. Cách chọn', text: 'Hỏi: đây là thói quen hay việc đang diễn ra/tạm thời? Đừng chỉ săn từ khóa.', formula: '', example: 'Every day → thường hiện tại đơn; right now → thường tiếp diễn.' }
+    ],
+    vocabulary: [
+      { word: 'habit', ipa: '/ˈhæbɪt/', meaning: 'thói quen', example: 'Reading before bed is a good habit.' },
+      { word: 'temporary', ipa: '/ˈtempərəri/', meaning: 'tạm thời', example: 'This is a temporary office.' },
+      { word: 'permanent', ipa: '/ˈpɜːmənənt/', meaning: 'lâu dài', example: 'She has a permanent job.' },
+      { word: 'usually', ipa: '/ˈjuːʒuəli/', meaning: 'thường xuyên', example: 'I usually wake up at six.' },
+      { word: 'right now', ipa: '/raɪt naʊ/', meaning: 'ngay bây giờ', example: 'He is talking on the phone right now.' }
+    ],
+    commonMistakes: [
+      { wrong: 'She work here.', right: 'She works here.', why: 'He/She/It + V-s ở khẳng định hiện tại đơn.' },
+      { wrong: 'I am knowing the answer.', right: 'I know the answer.', why: 'Know là động từ trạng thái — không chia tiếp diễn.' },
+      { wrong: 'Does she works here?', right: 'Does she work here?', why: 'Sau does, động từ trở về nguyên mẫu.' }
+    ],
+    tips: [
+      'Từ khóa hiện tại đơn: always, usually, often, sometimes, never, every day.',
+      'Từ khóa tiếp diễn: now, at the moment, currently, look!, listen!, today.',
+      'Học thuộc nhóm động từ trạng thái: know, understand, want, need, believe, love, hate, like, seem.'
+    ],
+    realLife: [
+      'Nói về công việc: “I work from home on Fridays.” — Tôi làm ở nhà vào thứ Sáu.',
+      'Cập nhật tình hình: “I’m working on a project this week.” — Tuần này tôi đang làm một dự án.'
     ]
   },
   {
-    "id": 3,
-    "title": "Quá khứ đơn",
-    "short": "Việc đã xảy ra và kết thúc",
-    "sections": [
-      {
-        "heading": "1. Cách dùng",
-        "text": "Dùng cho hành động đã kết thúc, chuỗi sự kiện hoặc thói quen cũ.",
-        "formula": "S + V2",
-        "example": "I called Lan last night."
-      },
-      {
-        "heading": "2. Động từ có quy tắc",
-        "text": "Thông thường thêm -ed. Một số từ đổi chính tả: study → studied, stop → stopped.",
-        "formula": "V + ed",
-        "example": "We finished the report."
-      },
-      {
-        "heading": "3. Động từ bất quy tắc",
-        "text": "Các động từ phổ biến phải học theo cụm: go-went-gone, see-saw-seen, buy-bought-bought.",
-        "formula": "",
-        "example": "Nam went home."
-      },
-      {
-        "heading": "4. Phủ định và câu hỏi",
-        "text": "Did/didn’t đã mang dấu hiệu quá khứ nên động từ chính dùng nguyên mẫu.",
-        "formula": "didn’t + V; Did + S + V?",
-        "example": "Did she call? / She didn’t call."
-      },
-      {
-        "heading": "5. Was và were",
-        "text": "I/he/she/it đi với was; you/we/they đi với were. Không dùng did với was/were.",
-        "formula": "",
-        "example": "Were you busy?"
-      }
+    id: 3,
+    title: 'Quá khứ đơn',
+    short: 'Việc đã xảy ra và kết thúc',
+    objectives: [
+      'Kể sự việc đã kết thúc trong quá khứ',
+      'Dùng đúng động từ bất quy tắc (go-went, buy-bought)',
+      'Phân biệt was/were và did trong câu hỏi/phủ định'
+    ],
+    sections: [
+      { heading: '1. Cách dùng', text: 'Dùng cho hành động đã kết thúc, chuỗi sự kiện hoặc thói quen cũ.', formula: 'S + V2', example: 'I called Lan last night.' },
+      { heading: '2. Động từ có quy tắc', text: 'Thông thường thêm -ed. Một số từ đổi chính tả: study → studied, stop → stopped.', formula: 'V + ed', example: 'We finished the report.' },
+      { heading: '3. Động từ bất quy tắc', text: 'Các động từ phổ biến phải học theo cụm: go-went-gone, see-saw-seen, buy-bought-bought.', formula: '', example: 'Nam went home.' },
+      { heading: '4. Phủ định và câu hỏi', text: 'Did/didn’t đã mang dấu hiệu quá khứ nên động từ chính dùng nguyên mẫu.', formula: 'didn’t + V; Did + S + V?', example: 'Did she call? / She didn’t call.' },
+      { heading: '5. Was và were', text: 'I/he/she/it đi với was; you/we/they đi với were. Không dùng did với was/were.', formula: '', example: 'Were you busy?' }
+    ],
+    vocabulary: [
+      { word: 'yesterday', ipa: '/ˈjestədeɪ/', meaning: 'hôm qua', example: 'I saw her yesterday.' },
+      { word: 'last week', ipa: '/lɑːst wiːk/', meaning: 'tuần trước', example: 'We met last week.' },
+      { word: 'ago', ipa: '/əˈɡəʊ/', meaning: 'trước đây (khoảng thời gian)', example: 'She left two days ago.' },
+      { word: 'irregular', ipa: '/ɪˈreɡjələ/', meaning: 'bất quy tắc', example: '“Go” is an irregular verb.' },
+      { word: 'event', ipa: '/ɪˈvent/', meaning: 'sự kiện', example: 'The event happened last Sunday.' }
+    ],
+    commonMistakes: [
+      { wrong: 'I did went to the market.', right: 'I went to the market.', why: 'Did đã mang nghĩa quá khứ — động từ chính không chia nữa.' },
+      { wrong: 'She didn’t called me.', right: 'She didn’t call me.', why: 'Sau didn’t, động từ về nguyên mẫu.' },
+      { wrong: 'They was happy.', right: 'They were happy.', why: 'You/We/They đi với were, không phải was.' }
+    ],
+    tips: [
+      'Dấu hiệu quá khứ: yesterday, last …, … ago, in 2020, when I was young.',
+      'Học động từ bất quy tắc theo cụm 3 dạng: V1-V2-V3. Ví dụ: see-saw-seen.',
+      'Câu hỏi quá khứ: Did + S + V? — sau did luôn là V nguyên mẫu.'
+    ],
+    realLife: [
+      'Kể chuyến đi: “I went to Da Nang last week.” — Tuần trước tôi đi Đà Nẵng.',
+      'Báo cáo công việc: “We finished the report yesterday.” — Hôm qua chúng tôi xong báo cáo.'
     ]
   },
   {
-    "id": 4,
-    "title": "Hiện tại hoàn thành",
-    "short": "Quá khứ kết nối với hiện tại",
-    "sections": [
-      {
-        "heading": "1. Công thức",
-        "text": "Dùng have/has + V3. He/she/it dùng has.",
-        "formula": "S + have/has + V3",
-        "example": "She has finished the report."
-      },
-      {
-        "heading": "2. Kết quả hiện tại",
-        "text": "Một việc đã xảy ra nhưng hậu quả còn quan trọng bây giờ.",
-        "formula": "",
-        "example": "I have lost my key. — Hiện vẫn chưa có chìa khóa."
-      },
-      {
-        "heading": "3. Trải nghiệm",
-        "text": "Dùng ever/never để nói trải nghiệm tính đến hiện tại.",
-        "formula": "",
-        "example": "Have you ever visited Da Nang?"
-      },
-      {
-        "heading": "4. For và since",
-        "text": "For đi với khoảng thời gian; since đi với điểm bắt đầu.",
-        "formula": "for + duration; since + starting point",
-        "example": "for five years / since 2021"
-      },
-      {
-        "heading": "5. Quá khứ đơn hay hoàn thành",
-        "text": "Có thời điểm quá khứ đã kết thúc như yesterday, last week, in 2020 thì dùng quá khứ đơn.",
-        "formula": "",
-        "example": "I saw Lan yesterday, không nói have seen yesterday."
-      }
+    id: 4,
+    title: 'Hiện tại hoàn thành',
+    short: 'Quá khứ kết nối với hiện tại',
+    objectives: [
+      'Diễn tả kết quả hoặc trải nghiệm còn liên quan đến hiện tại',
+      'Phân biệt for (khoảng) và since (mốc bắt đầu)',
+      'Không dùng với thời gian đã kết thúc (yesterday, last week)'
+    ],
+    sections: [
+      { heading: '1. Công thức', text: 'Dùng have/has + V3. He/she/it dùng has.', formula: 'S + have/has + V3', example: 'She has finished the report.' },
+      { heading: '2. Kết quả hiện tại', text: 'Một việc đã xảy ra nhưng hậu quả còn quan trọng bây giờ.', formula: '', example: 'I have lost my key. — Hiện vẫn chưa có chìa khóa.' },
+      { heading: '3. Trải nghiệm', text: 'Dùng ever/never để nói trải nghiệm tính đến hiện tại.', formula: '', example: 'Have you ever visited Da Nang?' },
+      { heading: '4. For và since', text: 'For đi với khoảng thời gian; since đi với điểm bắt đầu.', formula: 'for + duration; since + starting point', example: 'for five years / since 2021' },
+      { heading: '5. Quá khứ đơn hay hoàn thành', text: 'Có thời điểm quá khứ đã kết thúc như yesterday, last week, in 2020 thì dùng quá khứ đơn.', formula: '', example: 'I saw Lan yesterday, không nói have seen yesterday.' }
+    ],
+    vocabulary: [
+      { word: 'already', ipa: '/ɔːlˈredi/', meaning: 'đã rồi', example: 'I have already eaten lunch.' },
+      { word: 'yet', ipa: '/jet/', meaning: 'chưa (trong câu phủ định/hỏi)', example: 'Have you finished yet?' },
+      { word: 'ever', ipa: '/ˈevə/', meaning: 'đã từng (trong câu hỏi)', example: 'Have you ever been to Japan?' },
+      { word: 'never', ipa: '/ˈnevə/', meaning: 'chưa từng', example: 'I have never eaten sushi.' },
+      { word: 'experience', ipa: '/ɪkˈspɪəriəns/', meaning: 'trải nghiệm', example: 'It was a great experience.' }
+    ],
+    commonMistakes: [
+      { wrong: 'I have seen him yesterday.', right: 'I saw him yesterday.', why: 'Yesterday là thời gian đã kết thúc → dùng quá khứ đơn.' },
+      { wrong: 'She has went home.', right: 'She has gone home.', why: 'Sau has dùng V3 (gone), không dùng V2 (went).' },
+      { wrong: 'I live here since 2020.', right: 'I have lived here since 2020.', why: 'Since + mốc thời gian → chia hiện tại hoàn thành.' }
+    ],
+    tips: [
+      'Nhớ cặp từ đôi: already/yet, ever/never, just/recently — luôn dùng với hiện tại hoàn thành.',
+      'For = khoảng (for 3 years). Since = mốc (since 2020).',
+      'Thấy yesterday/last/in + năm → chuyển sang quá khứ đơn ngay.'
+    ],
+    realLife: [
+      'Phỏng vấn xin việc: “I have worked here for five years.”',
+      'Trải nghiệm du lịch: “Have you ever been to Japan?”'
     ]
   },
   {
-    "id": 5,
-    "title": "Các cách nói về tương lai",
-    "short": "Will, going to và lịch đã chốt",
-    "sections": [
-      {
-        "heading": "1. Will",
-        "text": "Dùng cho quyết định ngay lúc nói, lời hứa, đề nghị và dự đoán mang tính ý kiến.",
-        "formula": "will + V",
-        "example": "I’ll answer the phone."
-      },
-      {
-        "heading": "2. Be going to",
-        "text": "Dùng cho kế hoạch đã có hoặc dự đoán dựa trên dấu hiệu rõ.",
-        "formula": "be going to + V",
-        "example": "Look at the clouds. It is going to rain."
-      },
-      {
-        "heading": "3. Hiện tại tiếp diễn",
-        "text": "Dùng cho lịch hẹn hoặc sắp xếp đã chốt với thời gian cụ thể.",
-        "formula": "be + V-ing",
-        "example": "I am meeting a client at 2 p.m."
-      },
-      {
-        "heading": "4. Hiện tại đơn",
-        "text": "Dùng cho lịch trình chính thức như tàu, xe, chuyến bay hoặc lớp học.",
-        "formula": "S + V/V-s",
-        "example": "The train leaves at 6:15."
-      },
-      {
-        "heading": "Lỗi cần tránh",
-        "text": "Sau will dùng động từ nguyên mẫu; going to phải có động từ be.",
-        "formula": "",
-        "example": "She will come / I am going to buy."
-      }
+    id: 5,
+    title: 'Các cách nói về tương lai',
+    short: 'Will, going to và lịch đã chốt',
+    objectives: [
+      'Phân biệt will, be going to, hiện tại tiếp diễn khi nói về tương lai',
+      'Dùng hiện tại đơn cho lịch trình chính thức',
+      'Chọn cách nói đúng theo ngữ cảnh giao tiếp'
+    ],
+    sections: [
+      { heading: '1. Will', text: 'Dùng cho quyết định ngay lúc nói, lời hứa, đề nghị và dự đoán mang tính ý kiến.', formula: 'will + V', example: 'I’ll answer the phone.' },
+      { heading: '2. Be going to', text: 'Dùng cho kế hoạch đã có hoặc dự đoán dựa trên dấu hiệu rõ.', formula: 'be going to + V', example: 'Look at the clouds. It is going to rain.' },
+      { heading: '3. Hiện tại tiếp diễn', text: 'Dùng cho lịch hẹn hoặc sắp xếp đã chốt với thời gian cụ thể.', formula: 'be + V-ing', example: 'I am meeting a client at 2 p.m.' },
+      { heading: '4. Hiện tại đơn', text: 'Dùng cho lịch trình chính thức như tàu, xe, chuyến bay hoặc lớp học.', formula: 'S + V/V-s', example: 'The train leaves at 6:15.' },
+      { heading: '5. Lỗi cần tránh', text: 'Sau will dùng động từ nguyên mẫu; going to phải có động từ be.', formula: '', example: 'She will come / I am going to buy.' }
+    ],
+    vocabulary: [
+      { word: 'plan', ipa: '/plæn/', meaning: 'kế hoạch', example: 'What are your plans for the weekend?' },
+      { word: 'promise', ipa: '/ˈprɒmɪs/', meaning: 'lời hứa', example: 'I promise I’ll call you.' },
+      { word: 'schedule', ipa: '/ˈʃedjuːl/', meaning: 'lịch trình', example: 'The flight schedule is on the website.' },
+      { word: 'prediction', ipa: '/prɪˈdɪkʃn/', meaning: 'dự đoán', example: 'My prediction is that prices will rise.' },
+      { word: 'arrangement', ipa: '/əˈreɪndʒmənt/', meaning: 'sắp xếp đã chốt', example: 'I have an arrangement with a client.' }
+    ],
+    commonMistakes: [
+      { wrong: 'I will to go tomorrow.', right: 'I will go tomorrow.', why: 'Sau will không dùng to.' },
+      { wrong: 'I am go to travel.', right: 'I am going to travel.', why: 'Going to phải có be phía trước và V-ing sau be.' },
+      { wrong: 'The train will leaves at 6.', right: 'The train leaves at 6.', why: 'Lịch trình chính thức dùng hiện tại đơn, không dùng will.' }
+    ],
+    tips: [
+      'Will — quyết định ngay, lời hứa, đề nghị: “I’ll help you.”',
+      'Going to — kế hoạch đã có, dự đoán có bằng chứng: “It’s going to rain.”',
+      'Tiếp diễn cho lịch hẹn đã chốt, hiện tại đơn cho lịch trình.'
+    ],
+    realLife: [
+      'Đặt lịch họp: “I’m meeting him at 2 p.m. tomorrow.”',
+      'Lời hứa: “I’ll call you tonight, I promise.”'
     ]
   },
   {
-    "id": 6,
-    "title": "Động từ khuyết thiếu",
-    "short": "Can, could, should, must và have to",
-    "sections": [
-      {
-        "heading": "1. Quy tắc chung",
-        "text": "Sau can, could, should, must dùng động từ nguyên mẫu, không có to và không thêm -s.",
-        "formula": "modal + V",
-        "example": "She can drive."
-      },
-      {
-        "heading": "2. Can và could",
-        "text": "Can nói khả năng hiện tại hoặc lời nhờ; could nói khả năng quá khứ hoặc lời nhờ lịch sự hơn.",
-        "formula": "",
-        "example": "Could you speak slowly?"
-      },
-      {
-        "heading": "3. Should",
-        "text": "Dùng cho lời khuyên hoặc điều hợp lý nên làm.",
-        "formula": "should + V",
-        "example": "You should check the address."
-      },
-      {
-        "heading": "4. Must và have to",
-        "text": "Must thường thể hiện yêu cầu mạnh của người nói; have to thường đến từ quy định hoặc hoàn cảnh.",
-        "formula": "",
-        "example": "Employees have to show ID."
-      },
-      {
-        "heading": "5. Mustn’t và don’t have to",
-        "text": "Mustn’t là bị cấm. Don’t have to là không cần nhưng vẫn có thể làm.",
-        "formula": "",
-        "example": "You mustn’t park here / You don’t have to come early."
-      }
+    id: 6,
+    title: 'Động từ khuyết thiếu',
+    short: 'Can, could, should, must và have to',
+    objectives: [
+      'Dùng đúng can, could, should, must, have to',
+      'Phân biệt mustn’t (bị cấm) và don’t have to (không cần)',
+      'Tránh lỗi thêm “to” sau modal'
+    ],
+    sections: [
+      { heading: '1. Quy tắc chung', text: 'Sau can, could, should, must dùng động từ nguyên mẫu, không có to và không thêm -s.', formula: 'modal + V', example: 'She can drive.' },
+      { heading: '2. Can và could', text: 'Can nói khả năng hiện tại hoặc lời nhờ; could nói khả năng quá khứ hoặc lời nhờ lịch sự hơn.', formula: '', example: 'Could you speak slowly?' },
+      { heading: '3. Should', text: 'Dùng cho lời khuyên hoặc điều hợp lý nên làm.', formula: 'should + V', example: 'You should check the address.' },
+      { heading: '4. Must và have to', text: 'Must thường thể hiện yêu cầu mạnh của người nói; have to thường đến từ quy định hoặc hoàn cảnh.', formula: '', example: 'Employees have to show ID.' },
+      { heading: '5. Mustn’t và don’t have to', text: 'Mustn’t là bị cấm. Don’t have to là không cần nhưng vẫn có thể làm.', formula: '', example: 'You mustn’t park here / You don’t have to come early.' }
+    ],
+    vocabulary: [
+      { word: 'ability', ipa: '/əˈbɪləti/', meaning: 'khả năng', example: 'She has the ability to lead.' },
+      { word: 'advice', ipa: '/ədˈvaɪs/', meaning: 'lời khuyên', example: 'Can you give me some advice?' },
+      { word: 'obligation', ipa: '/ˌɒblɪˈɡeɪʃn/', meaning: 'nghĩa vụ', example: 'Paying taxes is an obligation.' },
+      { word: 'permission', ipa: '/pəˈmɪʃn/', meaning: 'sự cho phép', example: 'You need permission to enter.' },
+      { word: 'prohibition', ipa: '/ˌprəʊɪˈbɪʃn/', meaning: 'sự cấm', example: 'There is a prohibition on smoking.' }
+    ],
+    commonMistakes: [
+      { wrong: 'She can to drive.', right: 'She can drive.', why: 'Sau can không dùng to.' },
+      { wrong: 'You must to go now.', right: 'You must go now.', why: 'Sau must không dùng to.' },
+      { wrong: 'You mustn’t come early.', right: 'You don’t have to come early.', why: 'Mustn’t = bị cấm. Muốn nói “không cần” thì dùng don’t have to.' }
+    ],
+    tips: [
+      'Modal + V (không to, không -s): can, could, should, must, will.',
+      'Have to thì có to và chia theo chủ ngữ: has to, had to.',
+      'Nhớ: Mustn’t ≠ Don’t have to. Cấm khác với không cần.'
+    ],
+    realLife: [
+      'Lời khuyên: “You should see a doctor.” — Bạn nên đi khám.',
+      'Quy định công ty: “Employees have to show ID.” — Nhân viên phải xuất trình giấy tờ.'
     ]
   },
   {
-    "id": 7,
-    "title": "Danh từ, mạo từ và lượng từ",
-    "short": "A, an, the, some, any, much, many",
-    "sections": [
-      {
-        "heading": "1. Danh từ đếm được",
-        "text": "Danh từ số ít cần a/an/the hoặc từ xác định như my, this. Số nhiều thường thêm -s/-es.",
-        "formula": "",
-        "example": "a laptop / two laptops"
-      },
-      {
-        "heading": "2. Danh từ không đếm được",
-        "text": "Advice, information, furniture, equipment, traffic và money không dùng với a/an và thường không thêm -s.",
-        "formula": "",
-        "example": "some advice / a piece of information"
-      },
-      {
-        "heading": "3. A, an và the",
-        "text": "A/an dùng khi nhắc lần đầu hoặc chưa xác định; the dùng khi người nghe biết rõ vật nào. Chọn a/an theo âm.",
-        "formula": "",
-        "example": "an hour nhưng a university"
-      },
-      {
-        "heading": "4. Some và any",
-        "text": "Some thường dùng trong câu khẳng định và lời mời; any thường dùng trong câu hỏi và phủ định.",
-        "formula": "",
-        "example": "Do you have any questions?"
-      },
-      {
-        "heading": "5. Much và many",
-        "text": "Many đi với danh từ đếm được số nhiều; much đi với danh từ không đếm được. A lot of dùng tự nhiên với cả hai.",
-        "formula": "",
-        "example": "many emails / much time / a lot of work"
-      }
+    id: 7,
+    title: 'Danh từ, mạo từ và lượng từ',
+    short: 'A, an, the, some, any, much, many',
+    objectives: [
+      'Phân biệt danh từ đếm được và không đếm được',
+      'Dùng a/an/the đúng ngữ cảnh',
+      'Chọn some/any/much/many/a lot of phù hợp'
+    ],
+    sections: [
+      { heading: '1. Danh từ đếm được', text: 'Danh từ số ít cần a/an/the hoặc từ xác định như my, this. Số nhiều thường thêm -s/-es.', formula: '', example: 'a laptop / two laptops' },
+      { heading: '2. Danh từ không đếm được', text: 'Advice, information, furniture, equipment, traffic và money không dùng với a/an và thường không thêm -s.', formula: '', example: 'some advice / a piece of information' },
+      { heading: '3. A, an và the', text: 'A/an dùng khi nhắc lần đầu hoặc chưa xác định; the dùng khi người nghe biết rõ vật nào. Chọn a/an theo âm.', formula: '', example: 'an hour nhưng a university' },
+      { heading: '4. Some và any', text: 'Some thường dùng trong câu khẳng định và lời mời; any thường dùng trong câu hỏi và phủ định.', formula: '', example: 'Do you have any questions?' },
+      { heading: '5. Much và many', text: 'Many đi với danh từ đếm được số nhiều; much đi với danh từ không đếm được. A lot of dùng tự nhiên với cả hai.', formula: '', example: 'many emails / much time / a lot of work' }
+    ],
+    vocabulary: [
+      { word: 'countable', ipa: '/ˈkaʊntəbl/', meaning: 'đếm được', example: '“Book” is a countable noun.' },
+      { word: 'uncountable', ipa: '/ʌnˈkaʊntəbl/', meaning: 'không đếm được', example: '“Water” is uncountable.' },
+      { word: 'article', ipa: '/ˈɑːtɪkl/', meaning: 'mạo từ (a/an/the)', example: 'Use the article “a” for singular nouns.' },
+      { word: 'quantity', ipa: '/ˈkwɒntəti/', meaning: 'số lượng', example: 'What quantity do you need?' },
+      { word: 'amount', ipa: '/əˈmaʊnt/', meaning: 'khối lượng', example: 'A large amount of money.' }
+    ],
+    commonMistakes: [
+      { wrong: 'I need an information.', right: 'I need some information.', why: 'Information không đếm được — không dùng a/an.' },
+      { wrong: 'I have many money.', right: 'I have a lot of money.', why: 'Money không đếm được — dùng much hoặc a lot of.' },
+      { wrong: 'I bought a furnitures.', right: 'I bought some furniture.', why: 'Furniture không đếm được, không thêm -s, không dùng a.' }
+    ],
+    tips: [
+      'Học thuộc danh sách không đếm được: advice, information, furniture, equipment, traffic, money, news, work.',
+      'A/an chọn theo ÂM, không theo chữ cái: an hour / a university.',
+      'Some dùng khẳng định & lời mời. Any dùng câu hỏi & phủ định.'
+    ],
+    realLife: [
+      'Dịch vụ khách hàng: “Do you have any questions?” — Anh/chị có câu hỏi nào không?',
+      'Nhận xét giao thông: “There is too much traffic today.”'
     ]
   },
   {
-    "id": 8,
-    "title": "So sánh",
-    "short": "So sánh hơn, nhất và bằng",
-    "sections": [
-      {
-        "heading": "1. So sánh hơn",
-        "text": "Tính từ ngắn thêm -er; tính từ dài dùng more. Dùng than khi nêu đối tượng so sánh.",
-        "formula": "adj-er + than; more + adj + than",
-        "example": "faster than / more useful than"
-      },
-      {
-        "heading": "2. So sánh nhất",
-        "text": "Dùng the + -est hoặc the most.",
-        "formula": "",
-        "example": "the cheapest / the most expensive"
-      },
-      {
-        "heading": "3. Bất quy tắc",
-        "text": "Good-better-best; bad-worse-worst; many/much-more-most.",
-        "formula": "",
-        "example": "This option is better."
-      },
-      {
-        "heading": "4. So sánh bằng",
-        "text": "Dùng as + adjective + as; phủ định dùng not as...as.",
-        "formula": "",
-        "example": "A bus is not as fast as a taxi."
-      },
-      {
-        "heading": "5. Mức độ",
-        "text": "Dùng much, far, a little hoặc slightly trước dạng so sánh hơn; không dùng very.",
-        "formula": "",
-        "example": "much faster, không nói very faster"
-      }
+    id: 8,
+    title: 'So sánh',
+    short: 'So sánh hơn, nhất và bằng',
+    objectives: [
+      'Dùng đúng so sánh hơn, so sánh nhất và so sánh bằng',
+      'Xử lý tính từ bất quy tắc (good-better-best)',
+      'Tránh lỗi “more better”, “very faster”'
+    ],
+    sections: [
+      { heading: '1. So sánh hơn', text: 'Tính từ ngắn thêm -er; tính từ dài dùng more. Dùng than khi nêu đối tượng so sánh.', formula: 'adj-er + than; more + adj + than', example: 'faster than / more useful than' },
+      { heading: '2. So sánh nhất', text: 'Dùng the + -est hoặc the most.', formula: '', example: 'the cheapest / the most expensive' },
+      { heading: '3. Bất quy tắc', text: 'Good-better-best; bad-worse-worst; many/much-more-most.', formula: '', example: 'This option is better.' },
+      { heading: '4. So sánh bằng', text: 'Dùng as + adjective + as; phủ định dùng not as...as.', formula: '', example: 'A bus is not as fast as a taxi.' },
+      { heading: '5. Mức độ', text: 'Dùng much, far, a little hoặc slightly trước dạng so sánh hơn; không dùng very.', formula: '', example: 'much faster, không nói very faster' }
+    ],
+    vocabulary: [
+      { word: 'comparison', ipa: '/kəmˈpærɪsn/', meaning: 'sự so sánh', example: 'Make a comparison between the two.' },
+      { word: 'superior', ipa: '/suːˈpɪəriə/', meaning: 'cao hơn, tốt hơn', example: 'This model is superior to the old one.' },
+      { word: 'inferior', ipa: '/ɪnˈfɪəriə/', meaning: 'thấp hơn, kém hơn', example: 'The quality is inferior.' },
+      { word: 'equal', ipa: '/ˈiːkwəl/', meaning: 'bằng nhau', example: 'Their scores are equal.' },
+      { word: 'similar', ipa: '/ˈsɪmələ/', meaning: 'tương tự', example: 'The two designs are similar.' }
+    ],
+    commonMistakes: [
+      { wrong: 'She is more taller than me.', right: 'She is taller than me.', why: 'Tall là tính từ ngắn, không dùng “more” cùng lúc với -er.' },
+      { wrong: 'This is the most cheapest.', right: 'This is the cheapest.', why: 'Không dùng “most” với tính từ đã có -est.' },
+      { wrong: 'He runs very faster.', right: 'He runs much faster.', why: 'Không dùng very trước dạng so sánh hơn — dùng much hoặc far.' }
+    ],
+    tips: [
+      'Tính từ 1 âm tiết → +er / est. Tính từ 2+ âm tiết → more / most.',
+      'Học các dạng bất quy tắc: good-better-best, bad-worse-worst, far-farther/further-farthest/furthest.',
+      'Muốn nói “hơn nhiều” thì dùng much/far + so sánh hơn.'
+    ],
+    realLife: [
+      'Mua sắm: “This one is cheaper than that one.”',
+      'Nhận xét thời tiết: “Today is hotter than yesterday.”'
     ]
   },
   {
-    "id": 9,
-    "title": "Câu điều kiện",
-    "short": "Loại 0, 1, 2 và 3",
-    "sections": [
-      {
-        "heading": "1. Loại 0",
-        "text": "Nói sự thật, quy luật hoặc kết quả thường xuyên.",
-        "formula": "If + present, present",
-        "example": "If you heat ice, it melts."
-      },
-      {
-        "heading": "2. Loại 1",
-        "text": "Nói khả năng thực tế ở tương lai. Sau if dùng hiện tại đơn, không dùng will.",
-        "formula": "If + present, will + V",
-        "example": "If it rains, we will stay home."
-      },
-      {
-        "heading": "3. Loại 2",
-        "text": "Nói giả định không thật hoặc khó xảy ra ở hiện tại.",
-        "formula": "If + past, would + V",
-        "example": "If I had more time, I would study."
-      },
-      {
-        "heading": "4. Loại 3",
-        "text": "Tưởng tượng lại một quá khứ đã không xảy ra.",
-        "formula": "If + had + V3, would have + V3",
-        "example": "If I had left earlier, I would have caught the bus."
-      },
-      {
-        "heading": "5. Unless",
-        "text": "Unless có nghĩa nếu không; không thêm phủ định sau unless.",
-        "formula": "",
-        "example": "Unless you hurry, you will be late."
-      }
+    id: 9,
+    title: 'Câu điều kiện',
+    short: 'Loại 0, 1, 2 và 3',
+    objectives: [
+      'Phân biệt 4 loại câu điều kiện',
+      'Dùng đúng thì trong mệnh đề if',
+      'Nhận biết unless và tránh lỗi kép phủ định'
+    ],
+    sections: [
+      { heading: '1. Loại 0', text: 'Nói sự thật, quy luật hoặc kết quả thường xuyên.', formula: 'If + present, present', example: 'If you heat ice, it melts.' },
+      { heading: '2. Loại 1', text: 'Nói khả năng thực tế ở tương lai. Sau if dùng hiện tại đơn, không dùng will.', formula: 'If + present, will + V', example: 'If it rains, we will stay home.' },
+      { heading: '3. Loại 2', text: 'Nói giả định không thật hoặc khó xảy ra ở hiện tại.', formula: 'If + past, would + V', example: 'If I had more time, I would study.' },
+      { heading: '4. Loại 3', text: 'Tưởng tượng lại một quá khứ đã không xảy ra.', formula: 'If + had + V3, would have + V3', example: 'If I had left earlier, I would have caught the bus.' },
+      { heading: '5. Unless', text: 'Unless có nghĩa nếu không; không thêm phủ định sau unless.', formula: '', example: 'Unless you hurry, you will be late.' }
+    ],
+    vocabulary: [
+      { word: 'condition', ipa: '/kənˈdɪʃn/', meaning: 'điều kiện', example: 'Under these conditions, we can proceed.' },
+      { word: 'result', ipa: '/rɪˈzʌlt/', meaning: 'kết quả', example: 'The result depends on your effort.' },
+      { word: 'hypothetical', ipa: '/ˌhaɪpəˈθetɪkl/', meaning: 'giả định', example: 'This is a hypothetical situation.' },
+      { word: 'possibility', ipa: '/ˌpɒsəˈbɪləti/', meaning: 'khả năng', example: 'There is a possibility of rain.' },
+      { word: 'unless', ipa: '/ənˈles/', meaning: 'trừ khi, nếu không', example: 'I won’t go unless you come too.' }
+    ],
+    commonMistakes: [
+      { wrong: 'If it will rain, we will stay home.', right: 'If it rains, we will stay home.', why: 'Mệnh đề if loại 1 dùng hiện tại đơn, không dùng will.' },
+      { wrong: 'If I would be rich, I would travel.', right: 'If I were rich, I would travel.', why: 'Loại 2 dùng quá khứ giả định, thường dùng “were” cho mọi chủ ngữ.' },
+      { wrong: 'Unless you don’t hurry, we’ll be late.', right: 'Unless you hurry, we’ll be late.', why: 'Unless đã mang nghĩa phủ định — không thêm “don’t” nữa.' }
+    ],
+    tips: [
+      'Loại 0 = sự thật (present + present). Loại 1 = tương lai có thể (present + will).',
+      'Loại 2 = giả định hiện tại (past + would). Loại 3 = tiếc quá khứ (had V3 + would have V3).',
+      'Quy tắc vàng: KHÔNG dùng “will” trong mệnh đề if.'
+    ],
+    realLife: [
+      'Đàm phán: “If you order 100 units, we’ll give you a discount.”',
+      'Nuối tiếc: “If I had known, I would have come earlier.”'
     ]
   },
   {
-    "id": 10,
-    "title": "Mệnh đề quan hệ",
-    "short": "Who, which, that, whose và where",
-    "sections": [
-      {
-        "heading": "1. Who",
-        "text": "Dùng cho người; có thể làm chủ ngữ hoặc tân ngữ trong mệnh đề quan hệ.",
-        "formula": "",
-        "example": "The man who called me is my manager."
-      },
-      {
-        "heading": "2. Which và that",
-        "text": "Which dùng cho vật. That có thể dùng cho người hoặc vật trong mệnh đề xác định.",
-        "formula": "",
-        "example": "The phone that I bought is expensive."
-      },
-      {
-        "heading": "3. Whose",
-        "text": "Dùng để chỉ sở hữu cho người hoặc vật.",
-        "formula": "",
-        "example": "A customer whose order was delayed."
-      },
-      {
-        "heading": "4. Where",
-        "text": "Dùng cho địa điểm.",
-        "formula": "",
-        "example": "This is the office where I work."
-      },
-      {
-        "heading": "5. Dấu phẩy",
-        "text": "Mệnh đề không xác định dùng dấu phẩy và không dùng that.",
-        "formula": "",
-        "example": "Lan, who lives next door, is a nurse."
-      }
+    id: 10,
+    title: 'Mệnh đề quan hệ',
+    short: 'Who, which, that, whose và where',
+    objectives: [
+      'Dùng who, which, that, whose, where đúng đối tượng',
+      'Phân biệt mệnh đề xác định và không xác định',
+      'Biết khi nào có thể bỏ đại từ quan hệ'
+    ],
+    sections: [
+      { heading: '1. Who', text: 'Dùng cho người; có thể làm chủ ngữ hoặc tân ngữ trong mệnh đề quan hệ.', formula: '', example: 'The man who called me is my manager.' },
+      { heading: '2. Which và that', text: 'Which dùng cho vật. That có thể dùng cho người hoặc vật trong mệnh đề xác định.', formula: '', example: 'The phone that I bought is expensive.' },
+      { heading: '3. Whose', text: 'Dùng để chỉ sở hữu cho người hoặc vật.', formula: '', example: 'A customer whose order was delayed.' },
+      { heading: '4. Where', text: 'Dùng cho địa điểm.', formula: '', example: 'This is the office where I work.' },
+      { heading: '5. Dấu phẩy', text: 'Mệnh đề không xác định dùng dấu phẩy và không dùng that.', formula: '', example: 'Lan, who lives next door, is a nurse.' }
+    ],
+    vocabulary: [
+      { word: 'relative', ipa: '/ˈrelətɪv/', meaning: 'quan hệ', example: 'A relative clause adds information.' },
+      { word: 'clause', ipa: '/klɔːz/', meaning: 'mệnh đề', example: 'A clause has a subject and a verb.' },
+      { word: 'defining', ipa: '/dɪˈfaɪnɪŋ/', meaning: 'xác định', example: 'A defining clause is essential.' },
+      { word: 'non-defining', ipa: '/ˌnɒndɪˈfaɪnɪŋ/', meaning: 'không xác định', example: 'Non-defining clauses use commas.' },
+      { word: 'pronoun', ipa: '/ˈprəʊnaʊn/', meaning: 'đại từ', example: '“Who” is a relative pronoun.' }
+    ],
+    commonMistakes: [
+      { wrong: 'The woman which called me was polite.', right: 'The woman who called me was polite.', why: 'Người dùng who/that, không dùng which.' },
+      { wrong: 'The man who car was stolen.', right: 'The man whose car was stolen.', why: 'Sở hữu dùng whose, không dùng who.' },
+      { wrong: 'Lan, that lives next door, is a nurse.', right: 'Lan, who lives next door, is a nurse.', why: 'Mệnh đề không xác định (giữa dấu phẩy) không dùng that.' }
+    ],
+    tips: [
+      'Người → who/that. Vật → which/that. Sở hữu → whose. Địa điểm → where.',
+      'Có dấu phẩy → không dùng that.',
+      'Đại từ quan hệ làm tân ngữ có thể bỏ: “The phone (that) I bought…”'
+    ],
+    realLife: [
+      'Giới thiệu đồng nghiệp: “The colleague who sits next to me is very helpful.”',
+      'Mô tả sản phẩm: “The phone that I bought last month is amazing.”'
     ]
   },
   {
-    "id": 11,
-    "title": "Câu bị động",
-    "short": "Be + V3",
-    "sections": [
-      {
-        "heading": "1. Công thức",
-        "text": "Câu bị động nhấn mạnh người hoặc vật chịu tác động. Thì nằm ở be; động từ chính dùng V3.",
-        "formula": "be + V3",
-        "example": "The office is cleaned every evening."
-      },
-      {
-        "heading": "2. Quá khứ đơn",
-        "text": "Dùng was/were + V3.",
-        "formula": "was/were + V3",
-        "example": "My phone was stolen."
-      },
-      {
-        "heading": "3. Hiện tại hoàn thành",
-        "text": "Dùng have/has been + V3.",
-        "formula": "have/has been + V3",
-        "example": "The problem has been fixed."
-      },
-      {
-        "heading": "4. Tương lai và modal",
-        "text": "Dùng will be + V3 hoặc modal + be + V3.",
-        "formula": "",
-        "example": "The results will be announced / The form must be signed."
-      },
-      {
-        "heading": "5. Khi nào dùng",
-        "text": "Dùng khi không biết ai làm, người làm không quan trọng hoặc muốn nhấn mạnh kết quả.",
-        "formula": "",
-        "example": "Không cần thêm by a mechanic khi điều đó quá rõ."
-      }
+    id: 11,
+    title: 'Câu bị động',
+    short: 'Be + V3',
+    objectives: [
+      'Chuyển câu chủ động sang bị động ở các thì chính',
+      'Nhận biết khi nào nên dùng bị động',
+      'Bỏ “by + tác nhân” khi không cần thiết'
+    ],
+    sections: [
+      { heading: '1. Công thức', text: 'Câu bị động nhấn mạnh người hoặc vật chịu tác động. Thì nằm ở be; động từ chính dùng V3.', formula: 'be + V3', example: 'The office is cleaned every evening.' },
+      { heading: '2. Quá khứ đơn', text: 'Dùng was/were + V3.', formula: 'was/were + V3', example: 'My phone was stolen.' },
+      { heading: '3. Hiện tại hoàn thành', text: 'Dùng have/has been + V3.', formula: 'have/has been + V3', example: 'The problem has been fixed.' },
+      { heading: '4. Tương lai và modal', text: 'Dùng will be + V3 hoặc modal + be + V3.', formula: '', example: 'The results will be announced / The form must be signed.' },
+      { heading: '5. Khi nào dùng', text: 'Dùng khi không biết ai làm, người làm không quan trọng hoặc muốn nhấn mạnh kết quả.', formula: '', example: 'Không cần thêm by a mechanic khi điều đó quá rõ.' }
+    ],
+    vocabulary: [
+      { word: 'passive', ipa: '/ˈpæsɪv/', meaning: 'bị động', example: 'Write this sentence in the passive.' },
+      { word: 'active', ipa: '/ˈæktɪv/', meaning: 'chủ động', example: 'The active voice is often clearer.' },
+      { word: 'agent', ipa: '/ˈeɪdʒənt/', meaning: 'tác nhân (người làm)', example: 'The agent can be omitted.' },
+      { word: 'focus', ipa: '/ˈfəʊkəs/', meaning: 'nhấn mạnh', example: 'The passive puts focus on the result.' },
+      { word: 'process', ipa: '/ˈprəʊses/', meaning: 'quy trình', example: 'The process is described in the manual.' }
+    ],
+    commonMistakes: [
+      { wrong: 'The report has completed.', right: 'The report has been completed.', why: 'Bị động cần “been” trước V3: has been + V3.' },
+      { wrong: 'The files were send.', right: 'The files were sent.', why: 'Sau be dùng V3 của send là “sent”, không dùng V1 “send”.' },
+      { wrong: 'It must be approve.', right: 'It must be approved.', why: 'Sau be luôn dùng V3 (approved), không dùng V nguyên mẫu.' }
+    ],
+    tips: [
+      'Công thức chung: be + V3. Thì luôn nằm ở be (is/was/has been/will be…).',
+      'Bỏ “by + tác nhân” khi không quan trọng: “The email was sent” thay vì “by my secretary”.',
+      'Bị động dùng khi: không biết ai làm, không cần biết, hoặc muốn nhấn mạnh đối tượng.'
+    ],
+    realLife: [
+      'Công việc: “The email was sent to all clients.” — Email đã được gửi cho toàn bộ khách hàng.',
+      'Quy định: “The form must be signed before submission.” — Biểu mẫu phải được ký trước khi nộp.'
     ]
   },
   {
-    "id": 12,
-    "title": "Câu hỏi và trật tự từ",
-    "short": "Đảo trợ động từ",
-    "sections": [
-      {
-        "heading": "1. Với be",
-        "text": "Đưa am/is/are/was/were lên trước chủ ngữ.",
-        "formula": "",
-        "example": "Are you busy? / Was Lan at home?"
-      },
-      {
-        "heading": "2. Với động từ thường",
-        "text": "Hiện tại dùng do/does; quá khứ dùng did. Sau trợ động từ dùng động từ nguyên mẫu.",
-        "formula": "",
-        "example": "Where do you work?"
-      },
-      {
-        "heading": "3. Với trợ động từ có sẵn",
-        "text": "Đưa have/has, will, can, should... lên trước chủ ngữ.",
-        "formula": "",
-        "example": "Have you finished? / Can you help?"
-      },
-      {
-        "heading": "4. Từ để hỏi",
-        "text": "Trật tự phổ biến: từ hỏi + trợ động từ + chủ ngữ + động từ.",
-        "formula": "",
-        "example": "How long have you lived here?"
-      },
-      {
-        "heading": "5. Who là chủ ngữ",
-        "text": "Khi who chính là người thực hiện hành động, không dùng do/does/did.",
-        "formula": "",
-        "example": "Who called Lan?"
-      }
+    id: 12,
+    title: 'Câu hỏi và trật tự từ',
+    short: 'Đảo trợ động từ',
+    objectives: [
+      'Đặt đúng câu hỏi yes/no và wh-',
+      'Phân biệt who là chủ ngữ và who là tân ngữ',
+      'Nhớ trật tự ASI (Auxiliary – Subject – Infinitive)'
+    ],
+    sections: [
+      { heading: '1. Với be', text: 'Đưa am/is/are/was/were lên trước chủ ngữ.', formula: '', example: 'Are you busy? / Was Lan at home?' },
+      { heading: '2. Với động từ thường', text: 'Hiện tại dùng do/does; quá khứ dùng did. Sau trợ động từ dùng động từ nguyên mẫu.', formula: '', example: 'Where do you work?' },
+      { heading: '3. Với trợ động từ có sẵn', text: 'Đưa have/has, will, can, should... lên trước chủ ngữ.', formula: '', example: 'Have you finished? / Can you help?' },
+      { heading: '4. Từ để hỏi', text: 'Trật tự phổ biến: từ hỏi + trợ động từ + chủ ngữ + động từ.', formula: '', example: 'How long have you lived here?' },
+      { heading: '5. Who là chủ ngữ', text: 'Khi who chính là người thực hiện hành động, không dùng do/does/did.', formula: '', example: 'Who called Lan?' }
+    ],
+    vocabulary: [
+      { word: 'question', ipa: '/ˈkwestʃən/', meaning: 'câu hỏi', example: 'Can I ask a question?' },
+      { word: 'auxiliary', ipa: '/ɔːɡˈzɪliəri/', meaning: 'trợ động từ', example: '“Do” is an auxiliary verb.' },
+      { word: 'inversion', ipa: '/ɪnˈvɜːʃn/', meaning: 'đảo ngữ', example: 'Questions need inversion.' },
+      { word: 'interrogative', ipa: '/ˌɪntəˈrɒɡətɪv/', meaning: 'nghi vấn', example: 'This is an interrogative sentence.' },
+      { word: 'subject', ipa: '/ˈsʌbdʒɪkt/', meaning: 'chủ ngữ', example: 'The subject comes after the auxiliary.' }
+    ],
+    commonMistakes: [
+      { wrong: 'Where you work?', right: 'Where do you work?', why: 'Câu hỏi với động từ thường phải có trợ động từ do/does/did.' },
+      { wrong: 'Does he works here?', right: 'Does he work here?', why: 'Sau does, động từ về nguyên mẫu — không thêm -s.' },
+      { wrong: 'Who did called Lan?', right: 'Who called Lan?', why: 'Khi who là chủ ngữ, không dùng did.' }
+    ],
+    tips: [
+      'Nhớ từ ASI: Auxiliary + Subject + Infinitive. Ví dụ: “Do you like…?”',
+      'Who làm chủ ngữ → động từ chia theo who, không dùng do/does/did.',
+      'Câu hỏi gián tiếp KHÔNG đảo: “Could you tell me where the station is?”'
+    ],
+    realLife: [
+      'Phỏng vấn: “Where do you see yourself in five years?”',
+      'Hỏi đường: “How do I get to the railway station?”'
     ]
   },
   {
-    "id": 13,
-    "title": "V-ing và to + động từ",
-    "short": "Enjoy doing, want to do",
-    "sections": [
-      {
-        "heading": "1. V-ing",
-        "text": "Enjoy, avoid, finish, keep, mind, suggest và consider thường đi với V-ing.",
-        "formula": "",
-        "example": "I enjoy learning English."
-      },
-      {
-        "heading": "2. To + V",
-        "text": "Want, need, decide, plan, hope, promise và agree thường đi với to + V.",
-        "formula": "",
-        "example": "We decided to leave early."
-      },
-      {
-        "heading": "3. Sau giới từ",
-        "text": "Sau in, on, at, for, without... dùng V-ing.",
-        "formula": "",
-        "example": "Thank you for helping me."
-      },
-      {
-        "heading": "4. Look forward to",
-        "text": "Trong cấu trúc này, to là giới từ nên theo sau là V-ing.",
-        "formula": "",
-        "example": "I look forward to hearing from you."
-      },
-      {
-        "heading": "5. Đổi nghĩa",
-        "text": "Stop doing là dừng hẳn; stop to do là dừng việc đang làm để làm việc khác.",
-        "formula": "",
-        "example": "He stopped smoking / He stopped to smoke."
-      }
+    id: 13,
+    title: 'V-ing và to + động từ',
+    short: 'Enjoy doing, want to do',
+    objectives: [
+      'Nhớ động từ nào đi với V-ing, động từ nào đi với to + V',
+      'Dùng V-ing sau giới từ',
+      'Phân biệt stop doing và stop to do'
+    ],
+    sections: [
+      { heading: '1. V-ing', text: 'Enjoy, avoid, finish, keep, mind, suggest và consider thường đi với V-ing.', formula: '', example: 'I enjoy learning English.' },
+      { heading: '2. To + V', text: 'Want, need, decide, plan, hope, promise và agree thường đi với to + V.', formula: '', example: 'We decided to leave early.' },
+      { heading: '3. Sau giới từ', text: 'Sau in, on, at, for, without... dùng V-ing.', formula: '', example: 'Thank you for helping me.' },
+      { heading: '4. Look forward to', text: 'Trong cấu trúc này, to là giới từ nên theo sau là V-ing.', formula: '', example: 'I look forward to hearing from you.' },
+      { heading: '5. Đổi nghĩa', text: 'Stop doing là dừng hẳn; stop to do là dừng việc đang làm để làm việc khác.', formula: '', example: 'He stopped smoking / He stopped to smoke.' }
+    ],
+    vocabulary: [
+      { word: 'gerund', ipa: '/ˈdʒerənd/', meaning: 'danh động từ (V-ing)', example: '“Swimming” is a gerund.' },
+      { word: 'infinitive', ipa: '/ɪnˈfɪnətɪv/', meaning: 'nguyên mẫu (to + V)', example: '“To go” is an infinitive.' },
+      { word: 'preposition', ipa: '/ˌprepəˈzɪʃn/', meaning: 'giới từ', example: '“In” and “at” are prepositions.' },
+      { word: 'pattern', ipa: '/ˈpætn/', meaning: 'mẫu câu', example: 'Learn the verb patterns.' },
+      { word: 'meaning', ipa: '/ˈmiːnɪŋ/', meaning: 'nghĩa', example: 'The meaning changes with V-ing.' }
+    ],
+    commonMistakes: [
+      { wrong: 'I enjoy to read books.', right: 'I enjoy reading books.', why: 'Enjoy luôn đi với V-ing.' },
+      { wrong: 'I want going home.', right: 'I want to go home.', why: 'Want đi với to + V.' },
+      { wrong: 'I look forward to hear from you.', right: 'I look forward to hearing from you.', why: 'Trong “look forward to”, to là giới từ → theo sau là V-ing.' }
+    ],
+    tips: [
+      'Học theo cặp: V-ing → enjoy, avoid, finish, mind, suggest, consider. To + V → want, need, decide, plan, hope, promise, agree.',
+      'Sau giới từ (in, on, at, for, without, after, before) luôn dùng V-ing.',
+      'Nhớ nghĩa kép: stop doing (dừng hẳn) ≠ stop to do (dừng để làm việc khác).'
+    ],
+    realLife: [
+      'Viết email công việc: “I look forward to hearing from you.” — Tôi mong nhận hồi âm.',
+      'Trò chuyện: “I enjoy learning English every day.” — Tôi thích học tiếng Anh mỗi ngày.'
     ]
   }
 ]
+
 
 export const QUESTIONS = [
   {

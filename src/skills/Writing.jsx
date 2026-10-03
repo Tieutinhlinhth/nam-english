@@ -1,19 +1,51 @@
-import { useMemo, useState } from 'react'
-import { ArrowLeft, PenLine, Eye, EyeOff, RotateCcw } from 'lucide-react'
-import { WRITING } from './data'
+import { useEffect, useMemo, useState } from 'react'
+import { PenLine, Eye, EyeOff, RotateCcw, ChevronLeft } from 'lucide-react'
+import { getCefrMeta, getLevelText } from './config'
+import { filterByCefr } from './data'
+import { useContent } from './contentStore'
+import LevelPicker from './LevelPicker'
 import { scoreWriting } from './utils'
 
 export default function Writing({ onComplete, onBack }) {
+  const content = useContent()
+  const ALL_ITEMS = content.writing || []
+
+  const [selectedLevel, setSelectedLevel] = useState(null)
   const [idx, setIdx] = useState(0)
   const [text, setText] = useState('')
   const [result, setResult] = useState(null)
   const [showSample, setShowSample] = useState(false)
-  const item = WRITING[idx]
+
+  const items = useMemo(
+    () => selectedLevel ? filterByCefr(ALL_ITEMS, selectedLevel) : [],
+    [selectedLevel, ALL_ITEMS]
+  )
+
+  const item = items[idx]
+
+  useEffect(() => {
+    setIdx(0); setText(''); setResult(null); setShowSample(false)
+  }, [selectedLevel])
 
   const live = useMemo(() => {
+    if (!item) return { words: 0, target: 0, ok: false }
     const w = text.trim().split(/\s+/).filter(Boolean).length
     return { words: w, target: item.minWords, ok: w >= item.minWords }
-  }, [text, item.minWords])
+  }, [text, item])
+
+  if (!selectedLevel) {
+    return (
+      <LevelPicker
+        skillId="writing"
+        items={ALL_ITEMS}
+        onPick={lvl => setSelectedLevel(lvl)}
+        onBack={onBack}
+      />
+    )
+  }
+
+  if (!item) return null
+  const meta = getCefrMeta(selectedLevel)
 
   const reset = () => { setText(''); setResult(null); setShowSample(false) }
 
@@ -25,17 +57,26 @@ export default function Writing({ onComplete, onBack }) {
 
   const next = () => {
     reset()
-    if (idx < WRITING.length - 1) setIdx(i => i + 1)
-    else onBack()
+    if (idx < items.length - 1) setIdx(i => i + 1)
+    else setSelectedLevel(null)
   }
+  const prev = () => { reset(); setIdx(i => Math.max(0, i - 1)) }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Quay lại
+        <button
+          onClick={() => { setSelectedLevel(null); setIdx(0); reset() }}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900"
+        >
+          <ChevronLeft className="h-4 w-4" /> Chọn cấp độ khác
         </button>
-        <div className="text-sm text-slate-500">Bài {idx + 1}/{WRITING.length} · {item.level}</div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className={`rounded-full bg-gradient-to-r ${meta.color} px-2.5 py-0.5 text-xs font-bold text-white`}>
+            {meta.id}
+          </span>
+          <span className="text-slate-500">Bài {idx + 1}/{items.length} · {getLevelText(item.cefr)}</span>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -53,9 +94,13 @@ export default function Writing({ onComplete, onBack }) {
           ))}
         </div>
 
-        <textarea value={text} onChange={e => setText(e.target.value)} rows="9"
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          rows="9"
           placeholder="Viết bài của bạn bằng tiếng Anh..."
-          className="mt-5 w-full rounded-2xl border border-slate-300 p-4 leading-7 outline-none focus:border-blue-500" />
+          className="mt-5 w-full rounded-2xl border border-slate-300 p-4 leading-7 outline-none focus:border-blue-500"
+        />
 
         <div className="mt-2 flex items-center justify-between text-sm">
           <span className={live.ok ? 'text-emerald-600' : 'text-slate-500'}>
@@ -65,18 +110,25 @@ export default function Writing({ onComplete, onBack }) {
         </div>
 
         <div className="mt-5 flex flex-wrap justify-between gap-2">
-          <button onClick={reset}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+          <button
+            onClick={reset}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+          >
             <RotateCcw className="h-4 w-4" /> Xóa
           </button>
           <div className="flex gap-2">
-            <button onClick={() => setShowSample(s => !s)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
+            <button
+              onClick={() => setShowSample(s => !s)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+            >
               {showSample ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               {showSample ? 'Ẩn bài mẫu' : 'Xem bài mẫu'}
             </button>
-            <button onClick={check} disabled={!text.trim()}
-              className="rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 disabled:opacity-45">
+            <button
+              onClick={check}
+              disabled={!text.trim()}
+              className="rounded-xl bg-amber-600 px-4 py-2.5 font-semibold text-white hover:bg-amber-700 disabled:opacity-45"
+            >
               Chấm điểm
             </button>
           </div>
@@ -104,10 +156,19 @@ export default function Writing({ onComplete, onBack }) {
                 {result.notes.map((n, i) => <li key={i}>{n}</li>)}
               </ul>
             )}
-            <div className="flex justify-end">
-              <button onClick={next}
-                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
-                {idx < WRITING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+            <div className="flex flex-wrap justify-between gap-2">
+              <button
+                onClick={prev}
+                disabled={idx === 0}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45"
+              >
+                Bài trước
+              </button>
+              <button
+                onClick={next}
+                className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700"
+              >
+                {idx < items.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
               </button>
             </div>
           </div>

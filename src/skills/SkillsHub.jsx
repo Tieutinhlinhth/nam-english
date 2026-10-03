@@ -1,4 +1,5 @@
 import { Headphones, Mic, BookOpenCheck, PenLine, ChevronRight } from 'lucide-react'
+import { useContent } from './contentStore'
 
 const SKILLS = [
   { id: 'listening', icon: <Headphones />,    title: 'Listening', vi: 'Luyện nghe',   desc: 'Nghe – trả lời & chép chính tả', color: 'from-sky-500 to-blue-700' },
@@ -7,7 +8,9 @@ const SKILLS = [
   { id: 'writing',   icon: <PenLine />,       title: 'Writing',   vi: 'Luyện viết',   desc: 'Chấm sơ bộ + bài mẫu',           color: 'from-amber-500 to-orange-700' }
 ]
 
-export default function SkillsSection({ go, progress = {} }) {
+export default function SkillsSection({ go }) {
+  const content = useContent()
+
   return (
     <section>
       <div className="mb-5">
@@ -18,10 +21,7 @@ export default function SkillsSection({ go, progress = {} }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {SKILLS.map(s => {
-          const p = progress[s.id] || {}
-          const total = p.total || 0
-          const done = p.done || 0
-          const pct = total ? Math.round((done / total) * 100) : 0
+          const total = (content[s.id] || []).length
           return (
             <button
               key={s.id}
@@ -37,13 +37,7 @@ export default function SkillsSection({ go, progress = {} }) {
               <h3 className="mt-4 text-lg font-black">{s.title}</h3>
               <p className="text-xs text-white/85">{s.vi}</p>
               <p className="mt-2 text-xs text-white/75">{s.desc}</p>
-              <div className="mt-4 flex items-center justify-between text-xs">
-                <span className="tabular-nums text-white/90">{done}/{total}</span>
-                <span className="rounded-full bg-white/20 px-2 py-0.5 font-semibold tabular-nums">{pct}%</span>
-              </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/20">
-                <div className="h-full rounded-full bg-white/80 transition-all" style={{ width: `${pct}%` }} />
-              </div>
+              <div className="mt-4 text-xs font-bold tabular-nums text-white/90">{total} bài</div>
             </button>
           )
         })}

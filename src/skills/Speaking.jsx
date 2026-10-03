@@ -1,22 +1,54 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Mic, MicOff, Volume2, CheckCircle2, XCircle, RotateCcw } from 'lucide-react'
-import { SPEAKING } from './data'
+import { Mic, MicOff, Volume2, CheckCircle2, XCircle, RotateCcw, ChevronLeft } from 'lucide-react'
+import { getCefrMeta, getLevelText } from './config'
+import { filterByCefr } from './data'
+import { useContent } from './contentStore'
+import LevelPicker from './LevelPicker'
 import { getRecognition, speak, stopSpeaking, scorePronunciation } from './utils'
 
 export default function Speaking({ onComplete, onBack }) {
+  const content = useContent()
+  const ALL_ITEMS = content.speaking || []
+
+  const [selectedLevel, setSelectedLevel] = useState(null)
   const [idx, setIdx] = useState(0)
   const [listening, setListening] = useState(false)
   const [transcript, setTranscript] = useState('')
   const [result, setResult] = useState(null)
   const [showSample, setShowSample] = useState(false)
   const recRef = useRef(null)
-  const item = SPEAKING[idx]
+
   const supported = useMemo(() => !!getRecognition(), [])
+
+  const items = useMemo(
+    () => selectedLevel ? filterByCefr(ALL_ITEMS, selectedLevel) : [],
+    [selectedLevel, ALL_ITEMS]
+  )
+
+  const item = items[idx]
 
   useEffect(() => () => {
     stopSpeaking()
     try { recRef.current?.stop() } catch {}
   }, [])
+
+  useEffect(() => {
+    setIdx(0); setTranscript(''); setResult(null); setShowSample(false)
+  }, [selectedLevel])
+
+  if (!selectedLevel) {
+    return (
+      <LevelPicker
+        skillId="speaking"
+        items={ALL_ITEMS}
+        onPick={lvl => setSelectedLevel(lvl)}
+        onBack={onBack}
+      />
+    )
+  }
+
+  if (!item) return null
+  const meta = getCefrMeta(selectedLevel)
 
   const startListen = () => {
     const rec = getRecognition()
@@ -42,17 +74,29 @@ export default function Speaking({ onComplete, onBack }) {
 
   const next = () => {
     setTranscript(''); setResult(null); setShowSample(false); stopSpeaking()
-    if (idx < SPEAKING.length - 1) setIdx(i => i + 1)
-    else onBack()
+    if (idx < items.length - 1) setIdx(i => i + 1)
+    else setSelectedLevel(null)
+  }
+  const prev = () => {
+    setTranscript(''); setResult(null); setShowSample(false); stopSpeaking()
+    setIdx(i => Math.max(0, i - 1))
   }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
       <div className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 hover:text-slate-900">
-          <ArrowLeft className="h-4 w-4" /> Quay lại
+        <button
+          onClick={() => { stopSpeaking(); setSelectedLevel(null); setIdx(0) }}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-900"
+        >
+          <ChevronLeft className="h-4 w-4" /> Chọn cấp độ khác
         </button>
-        <div className="text-sm text-slate-500">Bài {idx + 1}/{SPEAKING.length} · {item.level}</div>
+        <div className="flex items-center gap-2 text-sm">
+          <span className={`rounded-full bg-gradient-to-r ${meta.color} px-2.5 py-0.5 text-xs font-bold text-white`}>
+            {meta.id}
+          </span>
+          <span className="text-slate-500">Bài {idx + 1}/{items.length} · {getLevelText(item.cefr)}</span>
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -66,17 +110,22 @@ export default function Speaking({ onComplete, onBack }) {
             : <button onClick={() => setShowSample(true)} className="mt-2 text-sm font-semibold text-blue-600">
                 Nhấn để xem câu mẫu
               </button>}
-          <button onClick={() => speak(item.target, { rate: 0.85 })}
-            className="mt-3 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800">
+          <button
+            onClick={() => speak(item.target, { rate: 0.85 })}
+            className="mt-3 inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+          >
             <Volume2 className="h-4 w-4" /> Nghe mẫu
           </button>
         </div>
 
         <div className="mt-6 grid place-items-center">
-          <button onClick={listening ? stopListen : startListen} disabled={!supported}
+          <button
+            onClick={listening ? stopListen : startListen}
+            disabled={!supported}
             className={`grid h-24 w-24 place-items-center rounded-full text-white shadow-lg transition ${
               listening ? 'bg-red-600 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'
-            } disabled:opacity-40`}>
+            } disabled:opacity-40`}
+          >
             {listening ? <MicOff size={40} /> : <Mic size={40} />}
           </button>
           <p className="mt-3 text-sm text-slate-500">
@@ -107,9 +156,7 @@ export default function Speaking({ onComplete, onBack }) {
                   <strong>Điểm phát âm ước lượng: {result.score}/100</strong>
                 </div>
                 {result.error && (
-                  <p className="mt-1 text-sm">
-                    Lỗi: {result.error}. Hãy cấp quyền micro và thử lại.
-                  </p>
+                  <p className="mt-1 text-sm">Lỗi: {result.error}. Hãy cấp quyền micro và thử lại.</p>
                 )}
               </div>
             )}
@@ -117,14 +164,27 @@ export default function Speaking({ onComplete, onBack }) {
         )}
 
         <div className="mt-6 flex flex-wrap justify-between gap-2">
-          <button onClick={() => { setTranscript(''); setResult(null); setShowSample(false) }}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50">
-            <RotateCcw className="h-4 w-4" /> Thử lại
+          <button
+            onClick={prev}
+            disabled={idx === 0}
+            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-45"
+          >
+            Bài trước
           </button>
-          <button onClick={next}
-            className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700">
-            {idx < SPEAKING.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setTranscript(''); setResult(null); setShowSample(false) }}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <RotateCcw className="h-4 w-4" /> Thử lại
+            </button>
+            <button
+              onClick={next}
+              className="rounded-xl bg-blue-600 px-4 py-2.5 font-semibold text-white hover:bg-blue-700"
+            >
+              {idx < items.length - 1 ? 'Bài tiếp theo' : 'Hoàn thành'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
